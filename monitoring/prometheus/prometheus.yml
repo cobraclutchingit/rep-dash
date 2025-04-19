@@ -1,0 +1,85 @@
+# Prometheus configuration for Rep Dashboard
+# Global configuration
+global:
+  scrape_interval:     15s  # Set the scrape interval to every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  scrape_timeout:      10s  # Timeout for scrapes
+
+  # Labels attached to all time series collected by Prometheus
+  external_labels:
+    monitor: 'rep-dashboard-monitor'
+
+# Rule files to load
+rule_files:
+  - "rules/node_rules.yml"
+  - "rules/app_rules.yml"
+  - "rules/postgres_rules.yml"
+  - "rules/nginx_rules.yml"
+
+# Alert manager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+
+# Scrape configurations
+scrape_configs:
+  # Self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'rep-dashboard-prod'
+
+  # PostgreSQL metrics
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['localhost:9187']
+    metrics_path: /metrics
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['localhost:9113']
+    metrics_path: /metrics
+
+  # Next.js application metrics
+  - job_name: 'next-app'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: /api/metrics
+    scrape_interval: 30s
+    scrape_timeout: 5s
+
+  # Blackbox exporter for endpoint monitoring
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]  # Look for a HTTP 200 response
+    static_configs:
+      - targets:
+        - https://rep-dashboard.example.com  # Main website
+        - https://rep-dashboard.example.com/api/health  # Health check endpoint
+        - https://rep-dashboard.example.com/api/status  # Status endpoint
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115  # Blackbox exporter
+
+  # cAdvisor for container metrics (if using Docker)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: /metrics
+    scheme: http

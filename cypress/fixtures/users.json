@@ -1,0 +1,26 @@
+[
+  {
+    "id": "user-1",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "role": "ADMIN",
+    "position": "MANAGER",
+    "isActive": true
+  },
+  {
+    "id": "user-2",
+    "name": "Sales Rep",
+    "email": "salesrep@example.com",
+    "role": "USER",
+    "position": "ENERGY_CONSULTANT",
+    "isActive": true
+  },
+  {
+    "id": "user-3",
+    "name": "Inactive User",
+    "email": "inactive@example.com",
+    "role": "USER",
+    "position": "ENERGY_CONSULTANT",
+    "isActive": false
+  }
+]

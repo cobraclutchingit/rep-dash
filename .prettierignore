@@ -1,0 +1,43 @@
+# Build outputs
+.next/
+build/
+dist/
+out/
+
+# Dependencies
+node_modules/
+
+# Coverage reports
+coverage/
+
+# Generated files
+*.generated.*
+
+# Prisma generated files
+prisma/client/
+
+# Cache
+.eslintcache
+.cache/
+.vercel/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Environment variables
+.env*
+!.env.example
+
+# Logs
+*.log
+
+# Misc
+README.md
+LICENSE
+*.svg
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif

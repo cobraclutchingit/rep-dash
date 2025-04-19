@@ -1,0 +1,131 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@rep-dashboard.example.com'
+  smtp_auth_username: 'alertmanager'
+  smtp_auth_password: 'password'
+  smtp_require_tls: true
+
+# The slack API URL is used when Slack notifier is triggered
+# If not present, Slack notifications will be disabled
+# Add slack_api_url: 'https://hooks.slack.com/services/xxxx/yyyy/zzzz'
+
+# The template directory
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route all alerts to appropriate receivers based on severity and type
+route:
+  # group_by: ['alertname', 'cluster', 'service']
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'email-notifications'
+  
+  # Routing structure based on severity and type
+  routes:
+    # Critical alerts go to all channels with faster repeat
+    - match:
+        severity: critical
+      receiver: 'all-channels'
+      repeat_interval: 1h
+      continue: true
+    
+    # Database specific alerts
+    - match_re:
+        alertname: Postgresql.*
+      receiver: 'db-team'
+      continue: true
+    
+    # Application specific alerts
+    - match_re:
+        alertname: '(Api|HTTP|NodeJS).*'
+      receiver: 'dev-team'
+      continue: true
+      
+    # Server alerts
+    - match_re:
+        alertname: '(Disk|CPU|Memory|Network|Instance).*'
+      receiver: 'ops-team'
+      continue: true
+
+# Define multiple receivers
+receivers:
+  # Default email receiver
+  - name: 'email-notifications'
+    email_configs:
+    - to: 'alerts@example.com'
+      send_resolved: true
+      headers:
+        subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+
+  # OPS team receiver
+  - name: 'ops-team'
+    email_configs:
+    - to: 'ops-team@example.com'
+      send_resolved: true
+      headers:
+        subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+    slack_configs:
+    - channel: '#ops-alerts'
+      title: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+      text: "{{ range .Alerts }}*Alert:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}\n*Severity:* {{ .Labels.severity }}\n*Started:* {{ .StartsAt | since }}\n{{ end }}"
+      send_resolved: true
+
+  # Dev team receiver
+  - name: 'dev-team'
+    email_configs:
+    - to: 'dev-team@example.com'
+      send_resolved: true
+      headers:
+        subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+    slack_configs:
+    - channel: '#dev-alerts'
+      title: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+      text: "{{ range .Alerts }}*Alert:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}\n*Severity:* {{ .Labels.severity }}\n*Started:* {{ .StartsAt | since }}\n{{ end }}"
+      send_resolved: true
+
+  # DB team receiver
+  - name: 'db-team'
+    email_configs:
+    - to: 'db-team@example.com'
+      send_resolved: true
+      headers:
+        subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+    slack_configs:
+    - channel: '#db-alerts'
+      title: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+      text: "{{ range .Alerts }}*Alert:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}\n*Severity:* {{ .Labels.severity }}\n*Started:* {{ .StartsAt | since }}\n{{ end }}"
+      send_resolved: true
+
+  # Critical alerts go to all channels and PagerDuty
+  - name: 'all-channels'
+    email_configs:
+    - to: 'critical-alerts@example.com'
+      send_resolved: true
+      headers:
+        subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    slack_configs:
+    - channel: '#critical-alerts'
+      title: '[CRITICAL] {{ .GroupLabels.alertname }}'
+      text: "{{ range .Alerts }}*Alert:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}\n*Severity:* {{ .Labels.severity }}\n*Started:* {{ .StartsAt | since }}\n{{ end }}"
+      send_resolved: true
+    pagerduty_configs:
+    - service_key: 'your-pagerduty-service-key'
+      description: '{{ .CommonLabels.alertname }}'
+      details:
+        firing: '{{ .Alerts.Firing | len }}'
+        status: '{{ .Status | toUpper }}'
+        instance: '{{ .CommonLabels.instance }}'
+        summary: '{{ .CommonAnnotations.summary }}'
+
+# Inhibition rules
+# Inhibit alerts based on certain conditions
+inhibit_rules:
+  # If there's a critical alert in the same instance, don't send warnings
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['instance']

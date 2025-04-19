@@ -1,0 +1,653 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====== Authentication Models ======
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SalesPosition {
+  JUNIOR_EC
+  ENERGY_CONSULTANT
+  ENERGY_SPECIALIST
+  MANAGER
+}
+
+model User {
+  id                  String            @id @default(cuid())
+  email               String            @unique
+  emailVerified       DateTime?
+  password            String
+  name                String?
+  fullName            String?
+  phoneNumber         String?
+  profileImageUrl     String?
+  bio                 String?
+  startDate           DateTime?
+  territory           String?
+  role                UserRole          @default(USER)
+  position            SalesPosition?
+  isActive            Boolean           @default(true)
+  lastLoginAt         DateTime?
+  resetToken          String?           // For password reset
+  resetTokenExpiry    DateTime?         // For password reset
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  
+  // Relations
+  accounts            Account[]
+  sessions            Session[]
+  trainingProgress    TrainingProgress[]
+  onboardingProgress  OnboardingProgress[]
+  createdEvents       CalendarEvent[]    @relation("EventCreator")
+  attendingEvents     EventAttendee[]
+  leaderboardEntries  LeaderboardEntry[]
+  achievements        UserAchievement[]
+  contests            ContestParticipant[]
+  notes               UserNote[]
+  notifications       Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([position])
+  @@index([resetToken])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model UserNote {
+  id        String   @id @default(cuid())
+  userId    String
+  authorId  String
+  content   String   @db.Text
+  isPrivate Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ====== Training Models ======
+
+enum TrainingCategory {
+  ONBOARDING
+  TECHNOLOGY
+  APPOINTMENT_SETTING
+  SALES_PROCESS
+  PRODUCT_KNOWLEDGE
+  COMPLIANCE
+  SALES_SKILLS
+  LEADERSHIP
+  CUSTOMER_SERVICE
+}
+
+enum ContentFormat {
+  HTML
+  MARKDOWN
+  VIDEO
+  PDF
+  QUIZ
+}
+
+model TrainingModule {
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  category          TrainingCategory
+  order             Int
+  isRequired        Boolean           @default(false)
+  isPublished       Boolean           @default(false)
+  visibleToRoles    UserRole[]
+  visibleToPositions SalesPosition[]
+  estimatedDuration Int?              // in minutes
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  publishedAt       DateTime?
+  
+  // Relations
+  sections          TrainingSection[]
+  progress          TrainingProgress[]
+  prerequisites     TrainingModulePrerequisite[] @relation("ModulePrerequisites")
+  requiredFor       TrainingModulePrerequisite[] @relation("RequiredForModules")
+
+  @@index([category])
+  @@index([isPublished])
+}
+
+model TrainingModulePrerequisite {
+  id                String         @id @default(cuid())
+  moduleId          String
+  prerequisiteId    String
+  
+  module            TrainingModule @relation("ModulePrerequisites", fields: [moduleId], references: [id], onDelete: Cascade)
+  prerequisite      TrainingModule @relation("RequiredForModules", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, prerequisiteId])
+}
+
+model TrainingSection {
+  id                String         @id @default(cuid())
+  moduleId          String
+  title             String
+  content           String         @db.Text
+  contentFormat     ContentFormat
+  order             Int
+  isOptional        Boolean        @default(false)
+  
+  // Relations
+  module            TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  resources         Resource[]
+  quizQuestions     QuizQuestion[]
+
+  @@index([moduleId])
+}
+
+model QuizQuestion {
+  id                String           @id @default(cuid())
+  sectionId         String
+  question          String
+  questionType      String           @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE, TRUE_FALSE, OPEN_ENDED
+  explanation       String?          @db.Text
+  points            Int              @default(1)
+  
+  // Relations
+  section           TrainingSection  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  options           QuizOption[]
+  answers           QuizAnswer[]
+
+  @@index([sectionId])
+}
+
+model QuizOption {
+  id                String         @id @default(cuid())
+  questionId        String
+  text              String
+  isCorrect         Boolean        @default(false)
+  
+  // Relations
+  question          QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model QuizAnswer {
+  id                String         @id @default(cuid())
+  questionId        String
+  progressId        String
+  selectedOptions   String[]       // IDs of selected options
+  textAnswer        String?        @db.Text // For open-ended questions
+  isCorrect         Boolean?
+  attemptNumber     Int            @default(1)
+  answeredAt        DateTime       @default(now())
+  
+  // Relations
+  question          QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  progress          TrainingProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@index([progressId])
+}
+
+model TrainingProgress {
+  id                String          @id @default(cuid())
+  userId            String
+  moduleId          String
+  status            String          @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  currentSection    Int?
+  percentComplete   Float           @default(0)
+  quizScore         Float?
+  startedAt         DateTime        @default(now())
+  completedAt       DateTime?
+  lastAccessedAt    DateTime        @default(now())
+  certificateIssued Boolean         @default(false)
+  certificateUrl    String?
+  
+  // Relations
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module            TrainingModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  quizAnswers       QuizAnswer[]
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+  @@index([status])
+}
+
+// ====== Resource Models ======
+
+enum ResourceType {
+  LINK
+  VIDEO
+  PDF
+  DOCUMENT
+  PRESENTATION
+  SPREADSHEET
+  IMAGE
+  AUDIO
+}
+
+model Resource {
+  id                String         @id @default(cuid())
+  title             String
+  description       String?
+  type              ResourceType
+  url               String
+  isExternal        Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  trainingSections  TrainingSection[]
+  onboardingSteps   OnboardingStep[]
+  calendarEvents    CalendarEvent[]
+
+  @@index([type])
+}
+
+// ====== Onboarding Models ======
+
+model OnboardingTrack {
+  id                String           @id @default(cuid())
+  name              String
+  description       String
+  forPositions      SalesPosition[]
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relations
+  steps             OnboardingStep[]
+
+  @@index([isActive])
+}
+
+model OnboardingStep {
+  id                String          @id @default(cuid())
+  trackId           String
+  title             String
+  description       String
+  instructions      String?         @db.Text
+  order             Int
+  estimatedDuration Int?            // in minutes
+  isRequired        Boolean         @default(true)
+  
+  // Relations
+  track             OnboardingTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  resources         Resource[]
+  progress          OnboardingProgress[]
+
+  @@index([trackId])
+  @@index([order])
+}
+
+model OnboardingProgress {
+  id                String           @id @default(cuid())
+  userId            String
+  stepId            String
+  status            String           @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  startedAt         DateTime?
+  completedAt       DateTime?
+  notes             String?          @db.Text
+  
+  // Relations
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step              OnboardingStep   @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stepId])
+  @@index([userId])
+  @@index([stepId])
+  @@index([status])
+}
+
+// ====== Calendar Models ======
+
+enum EventType {
+  TRAINING
+  MEETING
+  APPOINTMENT
+  BLITZ
+  CONTEST
+  HOLIDAY
+  OTHER
+}
+
+enum EventRecurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model CalendarEvent {
+  id                String            @id @default(cuid())
+  title             String
+  description       String?           @db.Text
+  eventType         EventType
+  isBlitz           Boolean           @default(false)
+  startDate         DateTime
+  endDate           DateTime
+  allDay            Boolean           @default(false)
+  location          String?
+  locationUrl       String?          // For virtual meetings
+  recurrence        EventRecurrence  @default(NONE)
+  recurrenceEndDate DateTime?
+  isPublic          Boolean           @default(true)
+  visibleToRoles    UserRole[]
+  visibleToPositions SalesPosition[]
+  createdById       String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relations
+  createdBy         User              @relation("EventCreator", fields: [createdById], references: [id])
+  attendees         EventAttendee[]
+  resources         Resource[]
+
+  @@index([eventType])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([isBlitz])
+  @@index([createdById])
+}
+
+model EventAttendee {
+  id                String         @id @default(cuid())
+  eventId           String
+  userId            String
+  status            String         @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  isRequired        Boolean        @default(true)
+  
+  // Relations
+  event             CalendarEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+// ====== Communication Models ======
+
+enum AnnouncementPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Announcement {
+  id                String              @id @default(cuid())
+  title             String
+  content           String              @db.Text
+  priority          AnnouncementPriority @default(MEDIUM)
+  category          String?             // For categorizing announcements
+  visibleToRoles    UserRole[]
+  visibleToPositions SalesPosition[]
+  publishDate       DateTime            @default(now())
+  expiryDate        DateTime?
+  isPinned          Boolean             @default(false)
+  isDraft           Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([priority])
+  @@index([publishDate])
+  @@index([expiryDate])
+  @@index([isPinned])
+  @@index([category])
+}
+
+model ImportantLink {
+  id                String            @id @default(cuid())
+  title             String
+  url               String
+  description       String?
+  category          String?
+  categorySlug      String?           // URL-friendly version of category
+  icon              String?
+  order             Int               @default(0)
+  visibleToRoles    UserRole[]
+  visibleToPositions SalesPosition[]
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([category])
+  @@index([categorySlug])
+  @@index([isActive])
+  @@index([order])
+}
+
+enum ContestType {
+  APPOINTMENTS
+  SALES
+  REFERRALS
+  TEAM_CHALLENGE
+  CUSTOM
+}
+
+enum ContestStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Contest {
+  id                String          @id @default(cuid())
+  title             String
+  description       String          @db.Text
+  contestType       ContestType
+  status            ContestStatus   @default(UPCOMING)
+  startDate         DateTime
+  endDate           DateTime
+  visibleToRoles    UserRole[]
+  visibleToPositions SalesPosition[]
+  prizes            Json?
+  rules             String?         @db.Text
+  isDraft           Boolean         @default(false)
+  imageUrl          String?         // Featured image for the contest
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relations
+  participants      ContestParticipant[]
+
+  @@index([contestType])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model ContestParticipant {
+  id                String         @id @default(cuid())
+  contestId         String
+  userId            String
+  score             Float          @default(0)
+  rank              Int?
+  isWinner          Boolean        @default(false)
+  prize             String?
+  
+  // Relations
+  contest           Contest        @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+  @@index([score])
+  @@index([isWinner])
+}
+
+// ====== Notification Model ======
+
+enum NotificationType {
+  ANNOUNCEMENT
+  CONTEST
+  LINK
+  OTHER
+}
+
+model Notification {
+  id                String            @id @default(cuid())
+  userId            String
+  title             String
+  message           String
+  type              NotificationType
+  resourceId        String?           // ID of the related resource (announcement, contest, etc.)
+  isRead            Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  expiresAt         DateTime?
+  
+  // Relations
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([expiresAt])
+}
+
+// ====== Leaderboard Models ======
+
+enum LeaderboardType {
+  APPOINTMENT_SETTERS
+  CLOSERS
+  REFERRALS
+  OVERALL
+}
+
+enum TimePeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  ALL_TIME
+}
+
+model Leaderboard {
+  id                String           @id @default(cuid())
+  name              String
+  description       String?
+  type              LeaderboardType
+  period            TimePeriod
+  forPositions      SalesPosition[]
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relations
+  entries           LeaderboardEntry[]
+
+  @@index([type])
+  @@index([period])
+  @@index([isActive])
+}
+
+model LeaderboardEntry {
+  id                String       @id @default(cuid())
+  leaderboardId     String
+  userId            String
+  score             Float
+  rank              Int?
+  periodStart       DateTime
+  periodEnd         DateTime
+  metrics           Json?        // Flexible metrics storage
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  // Relations
+  leaderboard       Leaderboard  @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([leaderboardId])
+  @@index([userId])
+  @@index([score])
+  @@index([periodStart, periodEnd])
+}
+
+// ====== Achievement Models ======
+
+model Achievement {
+  id                String            @id @default(cuid())
+  name              String
+  description       String
+  badgeImageUrl     String?
+  points            Int               @default(0)
+  isSecret          Boolean           @default(false)
+  criteria          String?           @db.Text
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relations
+  userAchievements  UserAchievement[]
+
+  @@index([isSecret])
+}
+
+model UserAchievement {
+  id                String       @id @default(cuid())
+  userId            String
+  achievementId     String
+  awardedAt         DateTime     @default(now())
+  
+  // Relations
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement       Achievement  @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+}

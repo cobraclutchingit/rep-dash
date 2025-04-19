@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Regular expression for commit message format
+# Format: type(scope): message
+# Example: feat(auth): add password reset functionality
+commit_regex='^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\([a-z0-9-]+\))?: .{1,100}'
+error_msg="Commit message format must be: type(scope): message
+Available types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert
+Example: feat(auth): add password reset functionality"
+
+if ! grep -qE "$commit_regex" "$1"; then
+  echo "$error_msg" >&2
+  exit 1
+fi

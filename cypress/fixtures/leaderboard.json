@@ -1,0 +1,37 @@
+{
+  "id": "leaderboard-1",
+  "name": "Monthly Sales Leaders",
+  "description": "Top sales performers for the current month",
+  "type": "CLOSERS",
+  "period": "MONTHLY",
+  "forPositions": ["ENERGY_CONSULTANT", "ENERGY_SPECIALIST"],
+  "isActive": true,
+  "entries": [
+    {
+      "id": "entry-1",
+      "userId": "user-2",
+      "score": 15000,
+      "rank": 1,
+      "periodStart": "2025-04-01T00:00:00Z",
+      "periodEnd": "2025-04-30T23:59:59Z",
+      "user": {
+        "id": "user-2",
+        "name": "Sales Rep",
+        "position": "ENERGY_CONSULTANT"
+      }
+    },
+    {
+      "id": "entry-2",
+      "userId": "user-3",
+      "score": 12500,
+      "rank": 2,
+      "periodStart": "2025-04-01T00:00:00Z",
+      "periodEnd": "2025-04-30T23:59:59Z",
+      "user": {
+        "id": "user-3",
+        "name": "Inactive User",
+        "position": "ENERGY_CONSULTANT"
+      }
+    }
+  ]
+}
