@@ -5,15 +5,17 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 // GET /api/training/modules/[id]/progress - Get user's progress for a module
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const moduleId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const moduleId = params.id;
     const userId = session.user.id;
 
     // Get the progress
@@ -38,15 +40,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/training/modules/[id]/progress - Update user's progress for a module
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const moduleId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const moduleId = params.id;
     const userId = session.user.id;
     const data = await request.json();
 

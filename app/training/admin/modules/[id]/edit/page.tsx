@@ -7,9 +7,12 @@ import ModuleEditForm from '@/app/training/admin/modules/components/module-edit-
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Metadata> {
+  const resolvedParams = await params;
   const trainingModule = await prisma.trainingModule.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
   });
 
   if (!trainingModule) {
@@ -23,7 +26,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function EditModulePage({ params }: { params: { id: string } }) {
+export default async function EditModulePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -37,7 +41,7 @@ export default async function EditModulePage({ params }: { params: { id: string 
 
   // Get the module with all its sections and prerequisites
   const trainingModule = await prisma.trainingModule.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       sections: {
         orderBy: { order: 'asc' },
@@ -70,7 +74,7 @@ export default async function EditModulePage({ params }: { params: { id: string 
   // Get all modules for prerequisites selection
   const allModules = await prisma.trainingModule.findMany({
     where: {
-      id: { not: params.id }, // Exclude the current module
+      id: { not: resolvedParams.id }, // Exclude the current module
     },
     select: {
       id: true,

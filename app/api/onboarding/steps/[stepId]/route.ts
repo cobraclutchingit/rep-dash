@@ -6,17 +6,13 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { canManageOnboarding } from '@/lib/utils/permissions';
 
-interface RouteParams {
-  params: {
-    stepId: string;
-  };
-}
-
 // GET /api/onboarding/steps/[stepId]
 // Get a specific onboarding step by ID
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ stepId: string }> }) {
   try {
-    const { stepId } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { stepId } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
@@ -72,9 +68,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT /api/onboarding/steps/[stepId]
 // Update an existing onboarding step
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ stepId: string }> }) {
   try {
-    const { stepId } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { stepId } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
@@ -179,9 +177,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // DELETE /api/onboarding/steps/[stepId]
 // Delete an onboarding step
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ stepId: string }> }) {
   try {
-    const { stepId } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { stepId } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {

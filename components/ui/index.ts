@@ -3,6 +3,7 @@ export * from './button';
 export * from './card';
 export * from './dropdown';
 export * from './empty-state';
+export * from './form';
 export * from './input';
 export * from './layout';
 export * from './loading';

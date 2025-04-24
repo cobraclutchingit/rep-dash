@@ -5,18 +5,16 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { canManageOnboarding } from '@/lib/utils/permissions';
 
-interface RouteParams {
-  params: {
-    userId: string;
-    stepId: string;
-  };
-}
-
 // POST /api/onboarding/users/[userId]/steps/[stepId]/reset
 // Admin endpoint to reset a user's progress on a specific step
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ userId: string; stepId: string }> }
+) {
   try {
-    const { userId, stepId } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { userId, stepId } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {

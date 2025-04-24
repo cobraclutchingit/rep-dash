@@ -4,17 +4,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-interface RouteParams {
-  params: {
-    stepId: string;
-  };
-}
-
 // POST /api/onboarding/steps/[stepId]/progress
 // Update a user's progress on a specific step
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest, context: { params: Promise<{ stepId: string }> }) {
   try {
-    const { stepId } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { stepId } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
@@ -100,9 +96,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 // DELETE /api/onboarding/steps/[stepId]/progress
 // Reset a user's progress on a specific step
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ stepId: string }> }) {
   try {
-    const { stepId } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { stepId } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {

@@ -5,17 +5,13 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { canManageOnboarding } from '@/lib/utils/permissions';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // GET /api/onboarding/tracks/[id]
 // Get a specific onboarding track by ID
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
@@ -60,9 +56,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT /api/onboarding/tracks/[id]
 // Update an existing onboarding track
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
@@ -116,9 +114,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // DELETE /api/onboarding/tracks/[id]
 // Delete an onboarding track
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {

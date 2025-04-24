@@ -26,15 +26,16 @@ type SectionInput = {
 };
 
 // GET /api/training/modules/[id] - Get a specific module
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const moduleId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const moduleId = params.id;
 
     // Build query filter - cast session values to proper enums
     const filter: ModuleFilter = {
@@ -94,8 +95,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/training/modules/[id] - Update a specific module
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const moduleId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -107,7 +111,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Forbidden: Requires admin privileges' }, { status: 403 });
     }
 
-    const moduleId = params.id;
     const data = await request.json();
 
     // Check if the module exists
@@ -234,8 +237,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/training/modules/[id] - Delete a specific module
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const moduleId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -246,8 +252,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     if (session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden: Requires admin privileges' }, { status: 403 });
     }
-
-    const moduleId = params.id;
 
     // Check if the module exists
     const existingModule = await prisma.trainingModule.findUnique({

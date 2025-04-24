@@ -4,17 +4,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // POST /api/communication/notifications/[id]/read
 // Mark a notification as read
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { params } = context;
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {

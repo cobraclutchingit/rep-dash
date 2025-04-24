@@ -2,22 +2,26 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'dark' | 'light' | 'system';
+export type Theme = 'dark' | 'light' | 'system';
 
-type ThemeProviderProps = {
+export type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
 };
 
-type ThemeProviderState = {
+export type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  isDarkMode: boolean;
+  toggleTheme: () => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: 'system',
   setTheme: () => null,
+  isDarkMode: false,
+  toggleTheme: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -33,9 +37,12 @@ export function ThemeProvider({
       ? (localStorage.getItem(storageKey) as Theme) || defaultTheme
       : defaultTheme
   );
+  
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   useEffect(() => {
     const root = window.document.documentElement;
+    let effectiveTheme: 'dark' | 'light' = 'light';
 
     root.classList.remove('light', 'dark');
 
@@ -45,10 +52,32 @@ export function ThemeProvider({
         : 'light';
 
       root.classList.add(systemTheme);
-      return;
+      effectiveTheme = systemTheme;
+    } else {
+      root.classList.add(theme);
+      effectiveTheme = theme;
     }
-
-    root.classList.add(theme);
+    
+    setIsDarkMode(effectiveTheme === 'dark');
+  }, [theme]);
+  
+  // Listen for system theme changes
+  useEffect(() => {
+    if (theme !== 'system') return;
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      const root = window.document.documentElement;
+      const systemTheme = e.matches ? 'dark' : 'light';
+      
+      root.classList.remove('light', 'dark');
+      root.classList.add(systemTheme);
+      setIsDarkMode(systemTheme === 'dark');
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
   const value = {
@@ -56,6 +85,12 @@ export function ThemeProvider({
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
+    },
+    isDarkMode,
+    toggleTheme: () => {
+      const newTheme = isDarkMode ? 'light' : 'dark';
+      localStorage.setItem(storageKey, newTheme);
+      setTheme(newTheme);
     },
   };
 

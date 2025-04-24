@@ -5,15 +5,17 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 // POST /api/training/modules/[id]/quiz - Submit quiz answers
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const moduleId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const moduleId = params.id;
     const userId = session.user.id;
     const data = await request.json();
 

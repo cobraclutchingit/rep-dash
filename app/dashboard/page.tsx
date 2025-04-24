@@ -1,7 +1,7 @@
 'use client';
 
-import { redirect } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { StatusBadge } from '@/components/ui/badge';
@@ -14,20 +14,28 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { ErrorBoundary, ErrorUI } from '@/components/ui/error-boundary';
 import { Loading } from '@/components/ui/loading';
 import { toast } from '@/components/ui/toast';
 import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { trackDbQuery } from '@/lib/utils/metrics';
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect('/login');
-    },
-  });
+// Types for dashboard stats
+interface DashboardStats {
+  totalSales: number;
+  thisMonth: number;
+  targetCompletion: number;
+  pendingDeals: number;
+}
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
+// Dashboard content component
+function DashboardContent() {
+  const router = useRouter();
+  const { session, isLoading: authLoading } = useAuth();
+  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
     thisMonth: 0,
     targetCompletion: 0,
@@ -35,17 +43,36 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    // Simulate API request
-    setTimeout(() => {
-      setStats({
-        totalSales: 127500,
-        thisMonth: 24300,
-        targetCompletion: 67,
-        pendingDeals: 4,
-      });
-      setIsLoading(false);
-    }, 1500);
-  }, []);
+    const fetchDashboardData = async () => {
+      if (!session?.user) return;
+      
+      try {
+        // Simulate API request with performance tracking
+        const startTime = performance.now();
+        
+        // In a real implementation, this would be an API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setStats({
+          totalSales: 127500,
+          thisMonth: 24300,
+          targetCompletion: 67,
+          pendingDeals: 4,
+        });
+        
+        // Track query duration
+        const duration = (performance.now() - startTime) / 1000;
+        trackDbQuery('query', 'dashboard_stats', duration);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to load dashboard data'));
+        console.error('Error loading dashboard:', err);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [session?.user]);
 
   const handleNotificationTest = () => {
     toast({
@@ -55,8 +82,21 @@ export default function DashboardPage() {
     });
   };
 
-  if (status === 'loading' || isLoading) {
-    return <Loading fullScreen text="Loading dashboard..." />;
+  if (authLoading || isDataLoading) {
+    return <Loading text="Loading dashboard data..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorUI 
+        error={error} 
+        reset={() => {
+          setError(null);
+          setIsDataLoading(true);
+          router.refresh();
+        }} 
+      />
+    );
   }
 
   return (
@@ -68,7 +108,9 @@ export default function DashboardPage() {
             Welcome back, {session?.user?.name}. Here&apos;s your sales overview.
           </TypographyMuted>
         </div>
-        <Button onClick={handleNotificationTest}>Refresh Dashboard</Button>
+        <Button onClick={handleNotificationTest} data-testid="refresh-dashboard">
+          Refresh Dashboard
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -108,6 +150,10 @@ export default function DashboardPage() {
               <div
                 className="bg-primary h-full rounded-full"
                 style={{ width: `${stats.targetCompletion}%` }}
+                role="progressbar"
+                aria-valuenow={stats.targetCompletion}
+                aria-valuemin={0}
+                aria-valuemax={100}
               />
             </div>
           </CardContent>
@@ -169,8 +215,8 @@ export default function DashboardPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full">
-              View All Activity
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/activity">View All Activity</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -204,12 +250,27 @@ export default function DashboardPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full">
-              View Calendar
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/calendar">View Calendar</Link>
             </Button>
           </CardFooter>
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  // Client-side auth guard with custom hook
+  const { isLoading, isAuthenticated } = useAuth();
+  
+  if (isLoading) {
+    return <Loading fullScreen text="Loading dashboard..." />;
+  }
+  
+  return (
+    <ErrorBoundary>
+      <DashboardContent />
+    </ErrorBoundary>
   );
 }

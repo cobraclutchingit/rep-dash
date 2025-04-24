@@ -19,16 +19,17 @@ const profileUpdateSchema = z.object({
 });
 
 // Get user by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     // Check if user is authenticated
     if (!session) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-
-    const userId = params.id;
 
     // Check if user has permission to view this profile
     if (session.user.id !== userId && session.user.role !== 'ADMIN') {
@@ -88,16 +89,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // Update user
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
     const session = await getServerSession(authOptions);
 
     // Check if user is authenticated
     if (!session) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-
-    const userId = params.id;
 
     // Check if user has permission to edit this profile
     if (!canEditUserProfile(session, userId)) {
