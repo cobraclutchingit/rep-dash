@@ -1,18 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageLeaderboards } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageLeaderboards } from '@/lib/utils/permissions';
 
 // GET /api/leaderboard
 // Get all visible leaderboards for the current user
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -20,20 +22,22 @@ export async function GET(request: NextRequest) {
     const isAdmin = canManageLeaderboards(session);
 
     // Build query based on user role and position
-    const query: any = {
+    const query: Prisma.LeaderboardFindManyArgs = {
       where: {
         // Regular users only see active leaderboards
         ...(isAdmin ? {} : { isActive: true }),
         // Filter by positions
-        ...(isAdmin || !session.user.position ? {} : {
-          OR: [
-            { forPositions: { has: session.user.position } },
-            { forPositions: { isEmpty: true } },
-          ],
-        }),
+        ...(isAdmin || !session.user.position
+          ? {}
+          : {
+              OR: [
+                { forPositions: { has: session.user.position } },
+                { forPositions: { isEmpty: true } },
+              ],
+            }),
       },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: 'desc',
       },
     };
 
@@ -41,11 +45,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(leaderboards);
   } catch (error) {
-    console.error("Error fetching leaderboards:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch leaderboards" },
-      { status: 500 }
-    );
+    console.error('Error fetching leaderboards:', error);
+    return NextResponse.json({ error: 'Failed to fetch leaderboards' }, { status: 500 });
   }
 }
 
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -70,21 +71,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      name,
-      description,
-      type,
-      period,
-      forPositions,
-      isActive,
-    } = await request.json();
+    const { name, description, type, period, forPositions, isActive } = await request.json();
 
     // Validate required fields
     if (!name || !type || !period) {
-      return NextResponse.json(
-        { error: "Name, type, and period are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name, type, and period are required' }, { status: 400 });
     }
 
     // Create the leaderboard
@@ -101,10 +92,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(leaderboard, { status: 201 });
   } catch (error) {
-    console.error("Error creating leaderboard:", error);
-    return NextResponse.json(
-      { error: "Failed to create leaderboard" },
-      { status: 500 }
-    );
+    console.error('Error creating leaderboard:', error);
+    return NextResponse.json({ error: 'Failed to create leaderboard' }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { LeaderboardType, TimePeriod, SalesPosition } from "@prisma/client";
+import { LeaderboardType, TimePeriod, SalesPosition } from '@prisma/client';
+import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 
 interface LeaderboardFormProps {
   leaderboard?: {
@@ -21,14 +21,14 @@ interface LeaderboardFormProps {
 export default function LeaderboardForm({
   leaderboard,
   onSuccess,
-  onCancel
+  onCancel,
 }: LeaderboardFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    type: LeaderboardType.OVERALL,
-    period: TimePeriod.MONTHLY,
+    name: '',
+    description: '',
+    type: 'OVERALL' as LeaderboardType,
+    period: 'MONTHLY' as TimePeriod,
     forPositions: [] as SalesPosition[],
     isActive: true,
   });
@@ -40,7 +40,7 @@ export default function LeaderboardForm({
     if (leaderboard) {
       setFormData({
         name: leaderboard.name,
-        description: leaderboard.description || "",
+        description: leaderboard.description || '',
         type: leaderboard.type,
         period: leaderboard.period,
         forPositions: leaderboard.forPositions,
@@ -55,7 +55,7 @@ export default function LeaderboardForm({
   ) => {
     const { name, value, type } = e.target;
 
-    if (type === "checkbox") {
+    if (type === 'checkbox') {
       setFormData({
         ...formData,
         [name]: (e.target as HTMLInputElement).checked,
@@ -90,7 +90,7 @@ export default function LeaderboardForm({
   // Format enum values for display
   const formatEnumValue = (value: string) => {
     return value
-      .replace(/_/g, " ")
+      .replace(/_/g, ' ')
       .toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
@@ -102,36 +102,30 @@ export default function LeaderboardForm({
     setError(null);
 
     try {
-      const url = leaderboard 
-        ? `/api/leaderboard/${leaderboard.id}` 
-        : "/api/leaderboard";
-      
-      const method = leaderboard ? "PUT" : "POST";
+      const url = leaderboard ? `/api/leaderboard/${leaderboard.id}` : '/api/leaderboard';
+      const method = leaderboard ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save leaderboard");
+        throw new Error(errorData.error || 'Failed to save leaderboard');
       }
 
-      // Refresh and redirect
-      router.refresh();
-      
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/leaderboard/admin");
+        router.push('/leaderboard/admin');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error saving leaderboard:", err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error saving leaderboard:', err);
     } finally {
       setLoading(false);
     }
@@ -139,16 +133,12 @@ export default function LeaderboardForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-destructive/10 text-destructive p-3 rounded-md">
-          {error}
-        </div>
-      )}
+      {error && <div className="bg-destructive/10 text-destructive rounded-md p-3">{error}</div>}
 
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium mb-1">
+            <label htmlFor="name" className="mb-1 block text-sm font-medium">
               Leaderboard Name *
             </label>
             <input
@@ -159,12 +149,12 @@ export default function LeaderboardForm({
               onChange={handleChange}
               required
               placeholder="e.g., Top Sales Representatives"
-              className="w-full rounded-md border-input bg-background px-3 py-2"
+              className="border-input bg-background w-full rounded-md px-3 py-2"
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-1">
+            <label htmlFor="description" className="mb-1 block text-sm font-medium">
               Description
             </label>
             <textarea
@@ -173,15 +163,15 @@ export default function LeaderboardForm({
               value={formData.description}
               onChange={handleChange}
               placeholder="Describe what this leaderboard tracks"
-              className="w-full rounded-md border-input bg-background px-3 py-2"
+              className="border-input bg-background w-full rounded-md px-3 py-2"
               rows={3}
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor="type" className="block text-sm font-medium mb-1">
+            <label htmlFor="type" className="mb-1 block text-sm font-medium">
               Leaderboard Type *
             </label>
             <select
@@ -190,7 +180,7 @@ export default function LeaderboardForm({
               value={formData.type}
               onChange={handleChange}
               required
-              className="w-full rounded-md border-input bg-background px-3 py-2"
+              className="border-input bg-background w-full rounded-md px-3 py-2"
             >
               {Object.values(LeaderboardType).map((type) => (
                 <option key={type} value={type}>
@@ -201,7 +191,7 @@ export default function LeaderboardForm({
           </div>
 
           <div>
-            <label htmlFor="period" className="block text-sm font-medium mb-1">
+            <label htmlFor="period" className="mb-1 block text-sm font-medium">
               Time Period *
             </label>
             <select
@@ -210,7 +200,7 @@ export default function LeaderboardForm({
               value={formData.period}
               onChange={handleChange}
               required
-              className="w-full rounded-md border-input bg-background px-3 py-2"
+              className="border-input bg-background w-full rounded-md px-3 py-2"
             >
               {Object.values(TimePeriod).map((period) => (
                 <option key={period} value={period}>
@@ -222,10 +212,8 @@ export default function LeaderboardForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Visible to Positions
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <label className="mb-2 block text-sm font-medium">Visible to Positions</label>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {Object.values(SalesPosition).map((position) => (
               <label key={position} className="flex items-center">
                 <input
@@ -238,7 +226,7 @@ export default function LeaderboardForm({
               </label>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-xs">
             Leave all unchecked to make visible to all positions
           </p>
         </div>
@@ -254,7 +242,7 @@ export default function LeaderboardForm({
             />
             <span>Active</span>
           </label>
-          <p className="text-xs text-muted-foreground mt-1 ml-6">
+          <p className="text-muted-foreground mt-1 ml-6 text-xs">
             Only active leaderboards are visible to users
           </p>
         </div>
@@ -264,22 +252,22 @@ export default function LeaderboardForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-4 py-2"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 disabled:opacity-50"
           disabled={loading}
         >
           {loading ? (
             <span className="flex items-center">
-              <span className="mr-2 h-4 w-4 border-2 border-primary-foreground border-t-transparent animate-spin rounded-full"></span>
+              <span className="border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></span>
               Saving...
             </span>
           ) : (
-            `${leaderboard ? "Update" : "Create"} Leaderboard`
+            `${leaderboard ? 'Update' : 'Create'} Leaderboard`
           )}
         </button>
       </div>

@@ -106,11 +106,13 @@ We use Husky to run pre-commit hooks that:
 ### Commit Message Format
 
 Commit messages must follow the format:
+
 ```
 type(scope): message
 ```
 
 Available types:
+
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes

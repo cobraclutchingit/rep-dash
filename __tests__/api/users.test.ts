@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server';
-import { GET as getUsersHandler } from '@/app/api/users/route';
-import { GET as getUserHandler } from '@/app/api/users/me/route';
-import prisma from '@/lib/prisma';
 
-// Mock the prisma client
+import { GET as getUserHandler } from '@/app/api/users/me/route';
+import { GET as getUsersHandler } from '@/app/api/users/route';
+import prisma from '@/lib/prisma';
+import '@testing-library/jest-dom';
+
+// Mock the Prisma client
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {
@@ -15,18 +17,21 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-// Mock auth
+// Mock NextAuth with a complete Session object
 jest.mock('next-auth', () => ({
-  getServerSession: jest.fn(() => ({
-    user: {
-      id: 'user-1',
-      name: 'Test User',
-      email: 'test@example.com',
-      role: 'ADMIN',
-      position: 'MANAGER',
-      isActive: true,
-    },
-  })),
+  getServerSession: jest.fn(() =>
+    Promise.resolve({
+      user: {
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'ADMIN',
+        position: 'MANAGER',
+        isActive: true,
+      },
+      expires: '2025-01-01T00:00:00Z', // Required by NextAuth Session type
+    })
+  ),
 }));
 
 const mockedPrisma = prisma as jest.Mocked<typeof prisma>;
@@ -38,7 +43,6 @@ describe('Users API', () => {
 
   describe('GET /api/users', () => {
     test('should return users with pagination', async () => {
-      // Mock the required implementations
       mockedPrisma.user.findMany.mockResolvedValue([
         {
           id: 'user-1',
@@ -49,6 +53,16 @@ describe('Users API', () => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
+          emailVerified: null,
+          fullName: null,
+          phoneNumber: null,
+          profileImageUrl: null,
+          bio: null,
+          startDate: null,
+          territory: null,
+          lastLoginAt: null,
+          resetToken: null,
+          resetTokenExpiry: null,
         },
         {
           id: 'user-2',
@@ -59,19 +73,25 @@ describe('Users API', () => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
+          emailVerified: null,
+          fullName: null,
+          phoneNumber: null,
+          profileImageUrl: null,
+          bio: null,
+          startDate: null,
+          territory: null,
+          lastLoginAt: null,
+          resetToken: null,
+          resetTokenExpiry: null,
         },
       ]);
-      
+
       mockedPrisma.user.count.mockResolvedValue(2);
-      
-      // Create a mock request
+
       const request = new NextRequest('http://localhost:3000/api/users?page=1&pageSize=10');
-      
-      // Call the handler
-      const response = await getUsersHandler(request);
+      const response = await getUsersHandler(request, { params: {} });
       const result = await response.json();
-      
-      // Assertions
+
       expect(response.status).toBe(200);
       expect(result.success).toBe(true);
       expect(result.data.users).toHaveLength(2);
@@ -82,8 +102,7 @@ describe('Users API', () => {
         totalCount: 2,
         totalPages: 1,
       });
-      
-      // Verify prisma was called correctly
+
       expect(mockedPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           skip: 0,
@@ -93,7 +112,6 @@ describe('Users API', () => {
     });
 
     test('should apply filters correctly', async () => {
-      // Mock the required implementations
       mockedPrisma.user.findMany.mockResolvedValue([
         {
           id: 'user-1',
@@ -104,23 +122,30 @@ describe('Users API', () => {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
+          emailVerified: null,
+          fullName: null,
+          phoneNumber: null,
+          profileImageUrl: null,
+          bio: null,
+          startDate: null,
+          territory: null,
+          lastLoginAt: null,
+          resetToken: null,
+          resetTokenExpiry: null,
         },
       ]);
-      
+
       mockedPrisma.user.count.mockResolvedValue(1);
-      
-      // Create a mock request with filters
+
       const request = new NextRequest(
         'http://localhost:3000/api/users?role=ADMIN&position=MANAGER&isActive=true&search=User'
       );
-      
-      // Call the handler
-      const response = await getUsersHandler(request);
-      
-      // Assertions
+      const response = await getUsersHandler(request, { params: {} });
+      const result = await response.json();
+
       expect(response.status).toBe(200);
-      
-      // Verify prisma was called with correct filters
+      expect(result.success).toBe(true);
+
       expect(mockedPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -136,7 +161,6 @@ describe('Users API', () => {
 
   describe('GET /api/users/me', () => {
     test('should return the current user profile', async () => {
-      // Mock user data
       const mockUser = {
         id: 'user-1',
         name: 'Test User',
@@ -146,23 +170,28 @@ describe('Users API', () => {
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        emailVerified: null,
+        fullName: null,
+        phoneNumber: null,
+        profileImageUrl: null,
+        bio: null,
+        startDate: null,
+        territory: null,
+        lastLoginAt: null,
+        resetToken: null,
+        resetTokenExpiry: null,
       };
-      
+
       mockedPrisma.user.findUnique.mockResolvedValue(mockUser);
-      
-      // Create a mock request
+
       const request = new NextRequest('http://localhost:3000/api/users/me');
-      
-      // Call the handler
-      const response = await getUserHandler(request);
+      const response = await getUserHandler(request, { params: {} });
       const result = await response.json();
-      
-      // Assertions
+
       expect(response.status).toBe(200);
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockUser);
-      
-      // Verify prisma was called correctly
+
       expect(mockedPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         select: expect.objectContaining({

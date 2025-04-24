@@ -1,44 +1,50 @@
+import { Session } from 'next-auth';
+
 import * as permissions from '@/lib/utils/permissions';
+import '@testing-library/jest-dom';
 
 describe('Permission Utilities', () => {
-  // Mock sessions
-  const adminSession = {
+  const adminSession: Session = {
     user: {
       id: 'admin-id',
       role: 'ADMIN',
       position: 'MANAGER',
       isActive: true,
     },
+    expires: '2025-01-01T00:00:00Z',
   };
 
-  const managerSession = {
+  const managerSession: Session = {
     user: {
       id: 'manager-id',
       role: 'USER',
       position: 'MANAGER',
       isActive: true,
     },
+    expires: '2025-01-01T00:00:00Z',
   };
 
-  const userSession = {
+  const userSession: Session = {
     user: {
       id: 'user-id',
       role: 'USER',
       position: 'ENERGY_CONSULTANT',
       isActive: true,
     },
+    expires: '2025-01-01T00:00:00Z',
   };
 
-  const inactiveUserSession = {
+  const inactiveUserSession: Session = {
     user: {
       id: 'inactive-id',
       role: 'USER',
       position: 'ENERGY_CONSULTANT',
       isActive: false,
     },
+    expires: '2025-01-01T00:00:00Z',
   };
 
-  const nullSession = null;
+  const nullSession: Session | null = null;
 
   describe('Basic permission checks', () => {
     test('hasRole should return true when user has the specified role', () => {
@@ -80,7 +86,9 @@ describe('Permission Utilities', () => {
     });
 
     test('hasOneOfPositions should check for multiple positions', () => {
-      expect(permissions.hasOneOfPositions(userSession, ['ENERGY_CONSULTANT', 'ENERGY_SPECIALIST'])).toBe(true);
+      expect(
+        permissions.hasOneOfPositions(userSession, ['ENERGY_CONSULTANT', 'ENERGY_SPECIALIST'])
+      ).toBe(true);
       expect(permissions.hasOneOfPositions(managerSession, ['MANAGER'])).toBe(true);
       expect(permissions.hasOneOfPositions(userSession, ['MANAGER', 'JUNIOR_EC'])).toBe(false);
     });
@@ -88,7 +96,7 @@ describe('Permission Utilities', () => {
     test('position-specific helpers should work correctly', () => {
       expect(permissions.isManager(managerSession)).toBe(true);
       expect(permissions.isManager(userSession)).toBe(false);
-      
+
       expect(permissions.isEnergyConsultant(userSession)).toBe(true);
       expect(permissions.isEnergyConsultant(managerSession)).toBe(false);
     });
@@ -109,17 +117,10 @@ describe('Permission Utilities', () => {
     });
 
     test('canEditUserProfile checks correct permissions', () => {
-      // Admins can edit any profile
       expect(permissions.canEditUserProfile(adminSession, 'some-other-id')).toBe(true);
-      
-      // Managers can edit team members
       expect(permissions.canEditUserProfile(managerSession, 'some-team-member-id')).toBe(true);
-      
-      // Users can only edit their own profile
       expect(permissions.canEditUserProfile(userSession, 'user-id')).toBe(true);
       expect(permissions.canEditUserProfile(userSession, 'some-other-id')).toBe(false);
-      
-      // Null session can't edit any profile
       expect(permissions.canEditUserProfile(nullSession, 'any-id')).toBe(false);
     });
   });

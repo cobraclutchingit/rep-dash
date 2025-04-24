@@ -1,12 +1,21 @@
-import React from 'react';
+import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import React from 'react';
+
+import {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
 
 describe('Card Components', () => {
   describe('Card', () => {
     test('renders the Card with children', () => {
       render(<Card data-testid="card">Card content</Card>);
-      
+
       const card = screen.getByTestId('card');
       expect(card).toBeInTheDocument();
       expect(card).toHaveTextContent('Card content');
@@ -17,18 +26,22 @@ describe('Card Components', () => {
     });
 
     test('applies custom className', () => {
-      render(<Card className="custom-class" data-testid="card">Card content</Card>);
-      
+      render(
+        <Card className="custom-class" data-testid="card">
+          Card content
+        </Card>
+      );
+
       const card = screen.getByTestId('card');
       expect(card).toHaveClass('custom-class');
-      expect(card).toHaveClass('rounded-lg'); // Still has the base class
+      expect(card).toHaveClass('rounded-lg');
     });
   });
 
   describe('CardHeader', () => {
     test('renders the CardHeader with children', () => {
       render(<CardHeader data-testid="card-header">Header content</CardHeader>);
-      
+
       const header = screen.getByTestId('card-header');
       expect(header).toBeInTheDocument();
       expect(header).toHaveTextContent('Header content');
@@ -42,11 +55,11 @@ describe('Card Components', () => {
   describe('CardTitle', () => {
     test('renders the CardTitle with children', () => {
       render(<CardTitle data-testid="card-title">Card Title</CardTitle>);
-      
+
       const title = screen.getByTestId('card-title');
       expect(title).toBeInTheDocument();
       expect(title).toHaveTextContent('Card Title');
-      expect(title.tagName).toBe('H3'); // Should be an h3 by default
+      expect(title.tagName).toBe('H3');
       expect(title).toHaveClass('text-lg');
       expect(title).toHaveClass('font-semibold');
     });
@@ -55,11 +68,11 @@ describe('Card Components', () => {
   describe('CardDescription', () => {
     test('renders the CardDescription with children', () => {
       render(<CardDescription data-testid="card-desc">Card Description</CardDescription>);
-      
+
       const desc = screen.getByTestId('card-desc');
       expect(desc).toBeInTheDocument();
       expect(desc).toHaveTextContent('Card Description');
-      expect(desc.tagName).toBe('P'); // Should be a paragraph
+      expect(desc.tagName).toBe('P');
       expect(desc).toHaveClass('text-sm');
       expect(desc).toHaveClass('text-muted-foreground');
     });
@@ -68,7 +81,7 @@ describe('Card Components', () => {
   describe('CardContent', () => {
     test('renders the CardContent with children', () => {
       render(<CardContent data-testid="card-content">Content text</CardContent>);
-      
+
       const content = screen.getByTestId('card-content');
       expect(content).toBeInTheDocument();
       expect(content).toHaveTextContent('Content text');
@@ -80,7 +93,7 @@ describe('Card Components', () => {
   describe('CardFooter', () => {
     test('renders the CardFooter with children', () => {
       render(<CardFooter data-testid="card-footer">Footer content</CardFooter>);
-      
+
       const footer = screen.getByTestId('card-footer');
       expect(footer).toBeInTheDocument();
       expect(footer).toHaveTextContent('Footer content');
@@ -107,11 +120,10 @@ describe('Card Components', () => {
           </CardFooter>
         </Card>
       );
-      
+
       const card = screen.getByTestId('complete-card');
       expect(card).toBeInTheDocument();
-      
-      // Check structure
+
       expect(screen.getByText('Complete Card')).toBeInTheDocument();
       expect(screen.getByText('This is a complete card example')).toBeInTheDocument();
       expect(screen.getByText('This is the main content area')).toBeInTheDocument();

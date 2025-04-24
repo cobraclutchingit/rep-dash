@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { EventType } from "@prisma/client";
+import { EventType } from '@prisma/client';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Define calendar event type
 export interface CalendarEvent {
@@ -55,18 +55,18 @@ interface CalendarContextType {
   filters: EventFilters;
   selectedEvent: CalendarEvent | null;
   selectedDate: Date;
-  view: "month" | "week" | "day" | "agenda";
+  view: 'month' | 'week' | 'day' | 'agenda';
   isEventModalOpen: boolean;
   isCreatingEvent: boolean;
-  
+
   setEvents: (events: CalendarEvent[]) => void;
   setFilters: (filters: Partial<EventFilters>) => void;
   setSelectedEvent: (event: CalendarEvent | null) => void;
   setSelectedDate: (date: Date) => void;
-  setView: (view: "month" | "week" | "day" | "agenda") => void;
+  setView: (view: 'month' | 'week' | 'day' | 'agenda') => void;
   setIsEventModalOpen: (isOpen: boolean) => void;
   setIsCreatingEvent: (isCreating: boolean) => void;
-  
+
   addEvent: (event: CalendarEvent) => void;
   updateEvent: (event: CalendarEvent) => void;
   deleteEvent: (eventId: string) => void;
@@ -77,7 +77,7 @@ const CalendarContext = createContext<CalendarContextType | undefined>(undefined
 export const useCalendar = () => {
   const context = useContext(CalendarContext);
   if (!context) {
-    throw new Error("useCalendar must be used within a CalendarProvider");
+    throw new Error('useCalendar must be used within a CalendarProvider');
   }
   return context;
 };
@@ -92,12 +92,12 @@ export default function CalendarProvider({
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
+  const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
   const [isEventModalOpen, setIsEventModalOpen] = useState<boolean>(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState<boolean>(false);
   const [filters, setFiltersState] = useState<EventFilters>({
     eventTypes: Object.values(EventType),
-    searchQuery: "",
+    searchQuery: '',
     dateRange: {
       start: null,
       end: null,
@@ -106,26 +106,24 @@ export default function CalendarProvider({
 
   // Parse dates from string to Date objects
   useEffect(() => {
-    const parsedEvents = initialEvents.map(event => ({
+    const parsedEvents = initialEvents.map((event) => ({
       ...event,
       startDate: new Date(event.startDate),
       endDate: new Date(event.endDate),
-      recurrenceEndDate: event.recurrenceEndDate 
-        ? new Date(event.recurrenceEndDate) 
-        : null,
+      recurrenceEndDate: event.recurrenceEndDate ? new Date(event.recurrenceEndDate) : null,
     }));
     setEvents(parsedEvents);
   }, [initialEvents]);
 
   const setFilters = (newFilters: Partial<EventFilters>) => {
-    setFiltersState(prev => ({
+    setFiltersState((prev) => ({
       ...prev,
       ...newFilters,
     }));
   };
 
   // Filter events based on filters
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = events.filter((event) => {
     // Filter by event type
     if (filters.eventTypes.length > 0 && !filters.eventTypes.includes(event.eventType)) {
       return false;
@@ -160,17 +158,15 @@ export default function CalendarProvider({
 
   // Event CRUD operations
   const addEvent = (event: CalendarEvent) => {
-    setEvents(prev => [...prev, event]);
+    setEvents((prev) => [...prev, event]);
   };
 
   const updateEvent = (updatedEvent: CalendarEvent) => {
-    setEvents(prev => 
-      prev.map(event => event.id === updatedEvent.id ? updatedEvent : event)
-    );
+    setEvents((prev) => prev.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)));
   };
 
   const deleteEvent = (eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
+    setEvents((prev) => prev.filter((event) => event.id !== eventId));
   };
 
   return (

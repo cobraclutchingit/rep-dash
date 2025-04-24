@@ -4,18 +4,18 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 
 ## Maintenance Schedule Overview
 
-| Task | Frequency | Script/Command | Responsible |
-|------|-----------|----------------|-------------|
-| **Database Maintenance** | Weekly | `monitoring/maintenance/database-maintenance.sh` | DBA |
-| **Application Maintenance** | Weekly | `monitoring/maintenance/app-maintenance.sh` | DevOps |
-| **Security Audit** | Monthly | `monitoring/maintenance/security-audit.sh` | Security Team |
-| **Database Backup** | Daily | `monitoring/backup/database-backup.sh` | DevOps |
-| **Application Backup** | Daily | `monitoring/backup/application-backup.sh` | DevOps |
-| **Backup Verification** | Weekly | `monitoring/backup/backup-verify.sh` | DevOps |
-| **Dependency Updates** | Monthly | Manual process | Development Team |
-| **OS Security Updates** | Monthly | `apt update && apt upgrade` | SysAdmin |
-| **Log Analysis** | Weekly | `monitoring/maintenance/log-analyzer.sh` | DevOps |
-| **Disaster Recovery Test** | Quarterly | Manual process | DevOps + DBA |
+| Task                        | Frequency | Script/Command                                   | Responsible      |
+| --------------------------- | --------- | ------------------------------------------------ | ---------------- |
+| **Database Maintenance**    | Weekly    | `monitoring/maintenance/database-maintenance.sh` | DBA              |
+| **Application Maintenance** | Weekly    | `monitoring/maintenance/app-maintenance.sh`      | DevOps           |
+| **Security Audit**          | Monthly   | `monitoring/maintenance/security-audit.sh`       | Security Team    |
+| **Database Backup**         | Daily     | `monitoring/backup/database-backup.sh`           | DevOps           |
+| **Application Backup**      | Daily     | `monitoring/backup/application-backup.sh`        | DevOps           |
+| **Backup Verification**     | Weekly    | `monitoring/backup/backup-verify.sh`             | DevOps           |
+| **Dependency Updates**      | Monthly   | Manual process                                   | Development Team |
+| **OS Security Updates**     | Monthly   | `apt update && apt upgrade`                      | SysAdmin         |
+| **Log Analysis**            | Weekly    | `monitoring/maintenance/log-analyzer.sh`         | DevOps           |
+| **Disaster Recovery Test**  | Quarterly | Manual process                                   | DevOps + DBA     |
 
 ## Detailed Procedures
 
@@ -26,6 +26,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/maintenance/database-maintenance.sh`
 
 **Tasks:**
+
 - VACUUM ANALYZE to reclaim space and update statistics
 - VACUUM FULL on tables with high dead tuple count
 - REINDEX to rebuild fragmented indexes
@@ -34,6 +35,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Analyze database size growth
 
 **Cron Configuration:**
+
 ```
 0 2 * * 0 /var/www/rep-dash/monitoring/maintenance/database-maintenance.sh > /var/log/rep-dash/db-maintenance.log 2>&1
 ```
@@ -45,6 +47,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/maintenance/app-maintenance.sh`
 
 **Tasks:**
+
 - Clean up Next.js cache
 - Check for memory leaks
 - Remove old log files
@@ -54,6 +57,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Restart application if necessary
 
 **Cron Configuration:**
+
 ```
 0 1 * * 6 /var/www/rep-dash/monitoring/maintenance/app-maintenance.sh > /var/log/rep-dash/app-maintenance.log 2>&1
 ```
@@ -65,6 +69,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/maintenance/security-audit.sh`
 
 **Tasks:**
+
 - Check for system updates
 - Verify SSH configuration
 - Check firewall status
@@ -77,6 +82,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Monitor login activity
 
 **Cron Configuration:**
+
 ```
 0 3 1 * * /var/www/rep-dash/monitoring/maintenance/security-audit.sh > /var/log/rep-dash/security-audit.log 2>&1
 ```
@@ -88,6 +94,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/backup/database-backup.sh`
 
 **Tasks:**
+
 - Create full PostgreSQL database backup
 - Encrypt backup files
 - Upload to remote storage
@@ -95,11 +102,13 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Clean up old backups
 
 **Retention Policy:**
+
 - Daily backups: 14 days
 - Weekly backups: 4 weeks
 - Monthly backups: 12 months
 
 **Cron Configuration:**
+
 ```
 0 0 * * * /var/www/rep-dash/monitoring/backup/database-backup.sh > /var/log/rep-dash/db-backup.log 2>&1
 ```
@@ -111,6 +120,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/backup/application-backup.sh`
 
 **Tasks:**
+
 - Create application file backup
 - Backup environment variables separately
 - Backup Nginx and PM2 configurations
@@ -119,11 +129,13 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Clean up old backups
 
 **Retention Policy:**
+
 - Daily backups: 14 days
 - Weekly backups: 4 weeks
 - Monthly backups: 12 months
 
 **Cron Configuration:**
+
 ```
 0 1 * * * /var/www/rep-dash/monitoring/backup/application-backup.sh > /var/log/rep-dash/app-backup.log 2>&1
 ```
@@ -135,6 +147,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/backup/backup-verify.sh`
 
 **Tasks:**
+
 - Verify database backup integrity
 - Test database restore to a temporary database
 - Verify application backup integrity
@@ -142,6 +155,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Validate backup contents
 
 **Cron Configuration:**
+
 ```
 0 4 * * 1 /var/www/rep-dash/monitoring/backup/backup-verify.sh > /var/log/rep-dash/backup-verify.log 2>&1
 ```
@@ -151,6 +165,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Frequency:** Monthly (Manual process)
 
 **Procedure:**
+
 1. Create a development branch
 2. Run `npm outdated` to identify outdated packages
 3. Update non-breaking dependencies with `npm update`
@@ -164,12 +179,14 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Frequency:** Monthly (2nd Sunday at 3:00 AM)
 
 **Procedure:**
+
 1. Check available updates: `apt update`
 2. Review security updates: `apt list --upgradable`
 3. Apply security updates: `apt upgrade -y`
 4. Reboot if kernel updates are applied: `shutdown -r now`
 
 **Cron Configuration:**
+
 ```
 0 3 8-14 * 0 [ "$(date +\%u)" = "0" ] && apt update && apt upgrade -y > /var/log/rep-dash/os-upgrade.log 2>&1
 ```
@@ -181,6 +198,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Script:** `/var/www/rep-dash/monitoring/maintenance/log-analyzer.sh`
 
 **Tasks:**
+
 - Analyze application error logs
 - Check for unusual patterns in access logs
 - Monitor for security incidents
@@ -188,6 +206,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 - Generate usage reports
 
 **Cron Configuration:**
+
 ```
 0 2 * * 5 /var/www/rep-dash/monitoring/maintenance/log-analyzer.sh > /var/log/rep-dash/log-analysis.log 2>&1
 ```
@@ -197,6 +216,7 @@ This document outlines the regular maintenance tasks, schedules, and procedures 
 **Frequency:** Quarterly
 
 **Procedure:**
+
 1. Schedule maintenance window
 2. Create a test environment on a separate server
 3. Restore database from latest backup

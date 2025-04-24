@@ -1,23 +1,18 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useLeaderboard } from "../providers/leaderboard-provider";
-import { LeaderboardType, TimePeriod, SalesPosition } from "@prisma/client";
+import { LeaderboardType, TimePeriod, SalesPosition } from '@prisma/client';
+import React from 'react';
+
+import { useLeaderboard } from '../providers/leaderboard-provider';
 
 export default function LeaderboardFilters() {
-  const { 
-    leaderboards, 
-    activeLeaderboard, 
-    setActiveLeaderboard, 
-    filters, 
-    setFilters,
-    loading
-  } = useLeaderboard();
+  const { leaderboards, activeLeaderboard, setActiveLeaderboard, filters, setFilters, loading } =
+    useLeaderboard();
 
   // Format enum values for display
   const formatEnumValue = (value: string) => {
     return value
-      .replace(/_/g, " ")
+      .replace(/_/g, ' ')
       .toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
@@ -33,17 +28,17 @@ export default function LeaderboardFilters() {
 
   // Handler for type filter change
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilters({ type: e.target.value as LeaderboardType | "ALL" });
+    setFilters({ type: e.target.value as LeaderboardType | 'ALL' });
   };
 
   // Handler for period filter change
   const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilters({ period: e.target.value as TimePeriod | "ALL" });
+    setFilters({ period: e.target.value as TimePeriod | 'ALL' });
   };
 
   // Handler for position filter change
   const handlePositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilters({ position: e.target.value as SalesPosition | "ALL" });
+    setFilters({ position: e.target.value as SalesPosition | 'ALL' });
   };
 
   // Handler for search input
@@ -54,9 +49,9 @@ export default function LeaderboardFilters() {
   // Handler for date filters
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name === "startDate") {
+    if (name === 'startDate') {
       setFilters({ startDate: value ? new Date(value) : null });
-    } else if (name === "endDate") {
+    } else if (name === 'endDate') {
       setFilters({ endDate: value ? new Date(value) : null });
     }
   };
@@ -64,26 +59,26 @@ export default function LeaderboardFilters() {
   // Reset all filters
   const handleResetFilters = () => {
     setFilters({
-      type: "ALL",
-      period: "ALL",
-      position: "ALL",
+      type: 'ALL',
+      period: 'ALL',
+      position: 'ALL',
       startDate: null,
       endDate: null,
-      searchTerm: "",
+      searchTerm: '',
     });
   };
 
   return (
-    <div className="bg-card rounded-lg border p-4 mb-6">
+    <div className="bg-card mb-6 rounded-lg border p-4">
       <div className="mb-4">
-        <label htmlFor="leaderboard" className="block text-sm font-medium mb-1">
+        <label htmlFor="leaderboard" className="mb-1 block text-sm font-medium">
           Select Leaderboard
         </label>
         <select
           id="leaderboard"
-          value={activeLeaderboard?.id || ""}
+          value={activeLeaderboard?.id || ''}
           onChange={handleLeaderboardChange}
-          className="w-full rounded-md border-input bg-background px-3 py-2"
+          className="border-input bg-background w-full rounded-md px-3 py-2"
           disabled={loading || leaderboards.length === 0}
         >
           {leaderboards.length === 0 ? (
@@ -98,16 +93,16 @@ export default function LeaderboardFilters() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <label htmlFor="type" className="block text-sm font-medium mb-1">
+          <label htmlFor="type" className="mb-1 block text-sm font-medium">
             Type
           </label>
           <select
             id="type"
             value={filters.type}
             onChange={handleTypeChange}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
+            className="border-input bg-background w-full rounded-md px-3 py-2"
             disabled={loading}
           >
             <option value="ALL">All Types</option>
@@ -120,14 +115,14 @@ export default function LeaderboardFilters() {
         </div>
 
         <div>
-          <label htmlFor="period" className="block text-sm font-medium mb-1">
+          <label htmlFor="period" className="mb-1 block text-sm font-medium">
             Period
           </label>
           <select
             id="period"
             value={filters.period}
             onChange={handlePeriodChange}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
+            className="border-input bg-background w-full rounded-md px-3 py-2"
             disabled={loading}
           >
             <option value="ALL">All Periods</option>
@@ -140,14 +135,14 @@ export default function LeaderboardFilters() {
         </div>
 
         <div>
-          <label htmlFor="position" className="block text-sm font-medium mb-1">
+          <label htmlFor="position" className="mb-1 block text-sm font-medium">
             Position
           </label>
           <select
             id="position"
             value={filters.position}
             onChange={handlePositionChange}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
+            className="border-input bg-background w-full rounded-md px-3 py-2"
             disabled={loading}
           >
             <option value="ALL">All Positions</option>
@@ -160,7 +155,7 @@ export default function LeaderboardFilters() {
         </div>
 
         <div>
-          <label htmlFor="search" className="block text-sm font-medium mb-1">
+          <label htmlFor="search" className="mb-1 block text-sm font-medium">
             Search
           </label>
           <input
@@ -169,39 +164,39 @@ export default function LeaderboardFilters() {
             placeholder="Search by name..."
             value={filters.searchTerm}
             onChange={handleSearchChange}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
+            className="border-input bg-background w-full rounded-md px-3 py-2"
             disabled={loading}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="startDate" className="block text-sm font-medium mb-1">
+          <label htmlFor="startDate" className="mb-1 block text-sm font-medium">
             Start Date
           </label>
           <input
             id="startDate"
             name="startDate"
             type="date"
-            value={filters.startDate ? filters.startDate.toISOString().split("T")[0] : ""}
+            value={filters.startDate ? filters.startDate.toISOString().split('T')[0] : ''}
             onChange={handleDateChange}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
+            className="border-input bg-background w-full rounded-md px-3 py-2"
             disabled={loading}
           />
         </div>
 
         <div>
-          <label htmlFor="endDate" className="block text-sm font-medium mb-1">
+          <label htmlFor="endDate" className="mb-1 block text-sm font-medium">
             End Date
           </label>
           <input
             id="endDate"
             name="endDate"
             type="date"
-            value={filters.endDate ? filters.endDate.toISOString().split("T")[0] : ""}
+            value={filters.endDate ? filters.endDate.toISOString().split('T')[0] : ''}
             onChange={handleDateChange}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
+            className="border-input bg-background w-full rounded-md px-3 py-2"
             disabled={loading}
           />
         </div>
@@ -210,7 +205,7 @@ export default function LeaderboardFilters() {
       <div className="flex justify-end">
         <button
           onClick={handleResetFilters}
-          className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 disabled:opacity-50"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-4 py-2 disabled:opacity-50"
           disabled={loading}
         >
           Reset Filters

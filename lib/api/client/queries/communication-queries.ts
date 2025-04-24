@@ -1,13 +1,10 @@
-"use client";
+'use client';
 
-import { 
-  useQuery, 
-  useMutation, 
-  useQueryClient,
-  useInfiniteQuery
-} from "@tanstack/react-query";
-import { apiClient } from "../api-client";
-import { toast } from "@/components/ui/toast";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+
+import { successToast } from '@/components/ui/toast';
+
+import { apiClient } from '../api-client';
 
 // Type definitions for communication data
 export interface Announcement {
@@ -52,7 +49,7 @@ export interface Contest {
   endDate: string;
   visibleToRoles: string[];
   visibleToPositions: string[];
-  prizes: any | null;
+  prizes: unknown | null;
   rules: string | null;
   isDraft: boolean;
   imageUrl: string | null;
@@ -80,7 +77,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: "ANNOUNCEMENT" | "CONTEST" | "LINK" | "OTHER";
+  type: 'ANNOUNCEMENT' | 'CONTEST' | 'LINK' | 'OTHER';
   resourceId: string | null;
   isRead: boolean;
   createdAt: string;
@@ -100,9 +97,9 @@ export function useAnnouncements(params?: {
   pageSize?: number;
 }) {
   return useQuery({
-    queryKey: ["announcements", params],
+    queryKey: ['announcements', params],
     queryFn: async () => {
-      const response = await apiClient.get<Announcement[]>("/communication/announcements", {
+      const response = await apiClient.get<Announcement[]>('/communication/announcements', {
         params,
       });
       return response.data;
@@ -115,7 +112,7 @@ export function useAnnouncements(params?: {
  */
 export function useAnnouncement(id: string) {
   return useQuery({
-    queryKey: ["announcements", id],
+    queryKey: ['announcements', id],
     queryFn: async () => {
       const response = await apiClient.get<Announcement>(`/communication/announcements/${id}`);
       return response.data;
@@ -129,20 +126,19 @@ export function useAnnouncement(id: string) {
  */
 export function useCreateAnnouncement() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (data: Omit<Announcement, "id" | "createdAt" | "updatedAt">) => {
-      const response = await apiClient.post<Announcement>("/communication/announcements", data);
+    mutationFn: async (data: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const response = await apiClient.post<Announcement>('/communication/announcements', data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      
-      toast({
-        title: "Success",
-        description: "Announcement created successfully",
-        variant: "success",
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Announcement created successfully',
       });
     },
   });
@@ -153,26 +149,24 @@ export function useCreateAnnouncement() {
  */
 export function useUpdateAnnouncement() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<Announcement>;
-    }) => {
-      const response = await apiClient.patch<Announcement>(`/communication/announcements/${id}`, data);
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Announcement> }) => {
+      const response = await apiClient.patch<Announcement>(
+        `/communication/announcements/${id}`,
+        data
+      );
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["announcements", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      
-      toast({
-        title: "Success",
-        description: "Announcement updated successfully",
-        variant: "success",
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: ['announcements', data.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Announcement updated successfully',
       });
     },
   });
@@ -183,20 +177,19 @@ export function useUpdateAnnouncement() {
  */
 export function useDeleteAnnouncement() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       await apiClient.delete(`/communication/announcements/${id}`);
       return id;
     },
     onSuccess: (id) => {
-      queryClient.invalidateQueries({ queryKey: ["announcements", id] });
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      
-      toast({
-        title: "Success",
-        description: "Announcement deleted successfully",
-        variant: "success",
+      queryClient.invalidateQueries({ queryKey: ['announcements', id] });
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Announcement deleted successfully',
       });
     },
   });
@@ -214,9 +207,9 @@ export function useLinks(params?: {
   pageSize?: number;
 }) {
   return useQuery({
-    queryKey: ["links", params],
+    queryKey: ['links', params],
     queryFn: async () => {
-      const response = await apiClient.get<ImportantLink[]>("/communication/links", {
+      const response = await apiClient.get<ImportantLink[]>('/communication/links', {
         params,
       });
       return response.data;
@@ -229,7 +222,7 @@ export function useLinks(params?: {
  */
 export function useLink(id: string) {
   return useQuery({
-    queryKey: ["links", id],
+    queryKey: ['links', id],
     queryFn: async () => {
       const response = await apiClient.get<ImportantLink>(`/communication/links/${id}`);
       return response.data;
@@ -243,19 +236,18 @@ export function useLink(id: string) {
  */
 export function useCreateLink() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (data: Omit<ImportantLink, "id" | "createdAt" | "updatedAt">) => {
-      const response = await apiClient.post<ImportantLink>("/communication/links", data);
+    mutationFn: async (data: Omit<ImportantLink, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const response = await apiClient.post<ImportantLink>('/communication/links', data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["links"] });
-      
-      toast({
-        title: "Success",
-        description: "Link created successfully",
-        variant: "success",
+      queryClient.invalidateQueries({ queryKey: ['links'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Link created successfully',
       });
     },
   });
@@ -268,12 +260,13 @@ export function useCreateLink() {
  */
 export function useNotifications(limit = 10) {
   return useInfiniteQuery({
-    queryKey: ["notifications"],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryKey: ['notifications'],
+    initialPageParam: 0 as number,
+    queryFn: async ({ pageParam }) => {
       const response = await apiClient.get<{
         notifications: Notification[];
         nextCursor: number | null;
-      }>("/communication/notifications", {
+      }>('/communication/notifications', {
         params: {
           cursor: pageParam,
           limit,
@@ -281,7 +274,8 @@ export function useNotifications(limit = 10) {
       });
       return response.data;
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage?.nextCursor !== null ? lastPage?.nextCursor : undefined,
   });
 }
 
@@ -290,10 +284,12 @@ export function useNotifications(limit = 10) {
  */
 export function useUnreadNotificationCount() {
   return useQuery({
-    queryKey: ["notifications", "unread", "count"],
+    queryKey: ['notifications', 'unread', 'count'],
     queryFn: async () => {
-      const response = await apiClient.get<{ count: number }>("/communication/notifications/unread/count");
-      return response.data.count;
+      const response = await apiClient.get<{ count: number }>(
+        '/communication/notifications/unread/count'
+      );
+      return response.data?.count ?? 0;
     },
   });
 }
@@ -303,54 +299,64 @@ export function useUnreadNotificationCount() {
  */
 export function useMarkNotificationAsRead() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       await apiClient.post(`/communication/notifications/${id}/read`);
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications", "unread", "count"] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', 'count'] });
     },
     // Optimistic update
     onMutate: async (id) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["notifications"] });
-      
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+
       // Snapshot the previous value
-      const previousNotifications = queryClient.getQueryData(["notifications"]);
-      
-      // Optimistically update to the new value
-      queryClient.setQueryData(["notifications"], (old: any) => {
-        // Map through pages
-        return {
-          ...old,
-          pages: old.pages.map((page: any) => ({
-            ...page,
-            notifications: page.notifications.map((notification: Notification) => 
-              notification.id === id 
-                ? { ...notification, isRead: true } 
-                : notification
-            ),
-          })),
-        };
-      });
-      
+      const previousNotifications = queryClient.getQueryData(['notifications']);
+
+      // Optimistic update to the new value
+      queryClient.setQueryData(
+        ['notifications'],
+        (
+          old:
+            | {
+                pages: { notifications: Notification[] }[];
+              }
+            | undefined
+        ) => {
+          if (!old) return old;
+          // Map through pages
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              notifications: page.notifications.map((notification) =>
+                notification.id === id ? { ...notification, isRead: true } : notification
+              ),
+            })),
+          };
+        }
+      );
+
       // Also update the unread count
-      const previousCount = queryClient.getQueryData(["notifications", "unread", "count"]);
-      queryClient.setQueryData(["notifications", "unread", "count"], (old: number) => Math.max(0, (old || 0) - 1));
-      
+      const previousCount = queryClient.getQueryData(['notifications', 'unread', 'count']);
+      queryClient.setQueryData(['notifications', 'unread', 'count'], (old: number) =>
+        Math.max(0, (old || 0) - 1)
+      );
+
       // Return the snapshotted values
       return { previousNotifications, previousCount };
     },
     onError: (_, __, context) => {
       // If the mutation fails, roll back
       if (context?.previousNotifications) {
-        queryClient.setQueryData(["notifications"], context.previousNotifications);
+        queryClient.setQueryData(['notifications'], context.previousNotifications);
       }
       if (context?.previousCount !== undefined) {
-        queryClient.setQueryData(["notifications", "unread", "count"], context.previousCount);
+        queryClient.setQueryData(['notifications', 'unread', 'count'], context.previousCount);
       }
     },
   });
@@ -361,19 +367,18 @@ export function useMarkNotificationAsRead() {
  */
 export function useMarkAllNotificationsAsRead() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async () => {
-      await apiClient.post("/communication/notifications/read-all");
+      await apiClient.post('/communication/notifications/read-all');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.setQueryData(["notifications", "unread", "count"], 0);
-      
-      toast({
-        title: "Success",
-        description: "All notifications marked as read",
-        variant: "success",
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.setQueryData(['notifications', 'unread', 'count'], 0);
+
+      successToast({
+        title: 'Success',
+        description: 'All notifications marked as read',
       });
     },
   });

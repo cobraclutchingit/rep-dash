@@ -1,52 +1,52 @@
 groups:
-- name: nginx_alerts
-  rules:
-  # Nginx high HTTP 4xx error rate
-  - alert: NginxHighHttp4xxErrorRate
-    expr: sum(rate(nginx_http_requests_total{status=~"4.."}[5m])) / sum(rate(nginx_http_requests_total[5m])) > 0.1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Nginx high HTTP 4xx error rate"
-      description: "HTTP 4xx error rate is above 10%\n  VALUE = {{ $value * 100 }}%"
+  - name: nginx_alerts
+    rules:
+      # Nginx high HTTP 4xx error rate
+      - alert: NginxHighHttp4xxErrorRate
+        expr: sum(rate(nginx_http_requests_total{status=~"4.."}[5m])) / sum(rate(nginx_http_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Nginx high HTTP 4xx error rate'
+          description: "HTTP 4xx error rate is above 10%\n  VALUE = {{ $value * 100 }}%"
 
-  # Nginx high HTTP 5xx error rate
-  - alert: NginxHighHttp5xxErrorRate
-    expr: sum(rate(nginx_http_requests_total{status=~"5.."}[1m])) / sum(rate(nginx_http_requests_total[1m])) > 0.05
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Nginx high HTTP 5xx error rate"
-      description: "HTTP 5xx error rate is above 5%\n  VALUE = {{ $value * 100 }}%"
+      # Nginx high HTTP 5xx error rate
+      - alert: NginxHighHttp5xxErrorRate
+        expr: sum(rate(nginx_http_requests_total{status=~"5.."}[1m])) / sum(rate(nginx_http_requests_total[1m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Nginx high HTTP 5xx error rate'
+          description: "HTTP 5xx error rate is above 5%\n  VALUE = {{ $value * 100 }}%"
 
-  # Nginx high latency
-  - alert: NginxLatencyHigh
-    expr: histogram_quantile(0.95, sum(rate(nginx_http_request_duration_seconds_bucket[5m])) by (le)) > 1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Nginx high latency"
-      description: "Nginx 95th percentile latency is above 1s\n  VALUE = {{ $value }}s"
+      # Nginx high latency
+      - alert: NginxLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(nginx_http_request_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Nginx high latency'
+          description: "Nginx 95th percentile latency is above 1s\n  VALUE = {{ $value }}s"
 
-  # Nginx high connection count
-  - alert: NginxHighConnectionCount
-    expr: nginx_connections_active > 1000
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Nginx high connection count"
-      description: "Nginx active connections are above 1000\n  VALUE = {{ $value }}"
+      # Nginx high connection count
+      - alert: NginxHighConnectionCount
+        expr: nginx_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Nginx high connection count'
+          description: "Nginx active connections are above 1000\n  VALUE = {{ $value }}"
 
-  # Nginx high request rate
-  - alert: NginxHighRequestRate
-    expr: sum(rate(nginx_http_requests_total[1m])) > 100
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Nginx high request rate"
-      description: "Nginx request rate is above 100 requests per second\n  VALUE = {{ $value }}"
+      # Nginx high request rate
+      - alert: NginxHighRequestRate
+        expr: sum(rate(nginx_http_requests_total[1m])) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Nginx high request rate'
+          description: "Nginx request rate is above 100 requests per second\n  VALUE = {{ $value }}"

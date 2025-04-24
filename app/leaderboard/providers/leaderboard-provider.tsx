@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { LeaderboardType, TimePeriod, SalesPosition } from "@prisma/client";
-import { useSession } from "next-auth/react";
+import { LeaderboardType, TimePeriod, SalesPosition } from '@prisma/client';
+import { useSession } from 'next-auth/react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 // Define types for our leaderboard data
 export interface Leaderboard {
@@ -29,7 +29,7 @@ export interface LeaderboardEntry {
   rank: number | null;
   periodStart: Date;
   periodEnd: Date;
-  metrics: any | null;
+  metrics: Record<string, number> | null;
   createdAt: Date;
   updatedAt: Date;
   user?: {
@@ -41,9 +41,9 @@ export interface LeaderboardEntry {
 }
 
 export interface LeaderboardFilters {
-  type: LeaderboardType | "ALL";
-  period: TimePeriod | "ALL";
-  position: SalesPosition | "ALL";
+  type: LeaderboardType | 'ALL';
+  period: TimePeriod | 'ALL';
+  position: SalesPosition | 'ALL';
   startDate: Date | null;
   endDate: Date | null;
   searchTerm: string;
@@ -80,7 +80,7 @@ const LeaderboardContext = createContext<LeaderboardContextType | undefined>(und
 export function useLeaderboard() {
   const context = useContext(LeaderboardContext);
   if (context === undefined) {
-    throw new Error("useLeaderboard must be used within a LeaderboardProvider");
+    throw new Error('useLeaderboard must be used within a LeaderboardProvider');
   }
   return context;
 }
@@ -93,15 +93,15 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Default filters
   const [filters, setFilters] = useState<LeaderboardFilters>({
-    type: "ALL",
-    period: "ALL",
-    position: "ALL",
+    type: 'ALL',
+    period: 'ALL',
+    position: 'ALL',
     startDate: null,
     endDate: null,
-    searchTerm: "",
+    searchTerm: '',
   });
 
   // Calculate stats
@@ -119,12 +119,12 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
     const totalEntries = entries.length;
     const topScore = Math.max(...entries.map((entry) => entry.score));
     const averageScore = entries.reduce((sum, entry) => sum + entry.score, 0) / totalEntries;
-    
+
     // Find current user's entry if they exist
-    const userEntry = session?.user 
+    const userEntry = session?.user
       ? entries.find((entry) => entry.userId === session.user.id)
       : null;
-    
+
     return {
       totalEntries,
       topScore,
@@ -134,58 +134,61 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
     };
   }, [entries, session]);
 
+  // Fetch entries for a specific leaderboard
+  const fetchLeaderboardEntries = useCallback(
+    async (leaderboardId: string) => {
+      if (!session?.user) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/leaderboard/${leaderboardId}/entries`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch leaderboard entries');
+        }
+
+        const data = await response.json();
+        setEntries(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setLoading(false);
+      }
+    },
+    [session]
+  );
+
   // Fetch all leaderboards
-  const fetchLeaderboards = async () => {
+  const fetchLeaderboards = useCallback(async () => {
     if (!session?.user) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch("/api/leaderboard");
-      
+      const response = await fetch('/api/leaderboard');
+
       if (!response.ok) {
-        throw new Error("Failed to fetch leaderboards");
+        throw new Error('Failed to fetch leaderboards');
       }
-      
+
       const data = await response.json();
       setLeaderboards(data);
-      
+
       // Set the first active leaderboard if none is selected
       if (!activeLeaderboard && data.length > 0) {
         setActiveLeaderboard(data[0]);
         await fetchLeaderboardEntries(data[0].id);
       }
-      
-      setLoading(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
-      setLoading(false);
-    }
-  };
 
-  // Fetch entries for a specific leaderboard
-  const fetchLeaderboardEntries = async (leaderboardId: string) => {
-    if (!session?.user) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(`/api/leaderboard/${leaderboardId}/entries`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch leaderboard entries");
-      }
-      
-      const data = await response.json();
-      setEntries(data);
       setLoading(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setLoading(false);
     }
-  };
+  }, [session, activeLeaderboard, fetchLeaderboardEntries]);
 
   // Apply filters to entries
   const getFilteredEntries = () => {
@@ -196,14 +199,14 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
           return false;
         }
       }
-      
+
       // Filter by position
-      if (filters.position !== "ALL" && entry.user?.position) {
+      if (filters.position !== 'ALL' && entry.user?.position) {
         if (entry.user.position !== filters.position) {
           return false;
         }
       }
-      
+
       // Filter by date range
       if (filters.startDate) {
         const entryStart = new Date(entry.periodStart);
@@ -211,14 +214,14 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
           return false;
         }
       }
-      
+
       if (filters.endDate) {
         const entryEnd = new Date(entry.periodEnd);
         if (entryEnd > filters.endDate) {
           return false;
         }
       }
-      
+
       return true;
     });
   };
@@ -233,14 +236,14 @@ export function LeaderboardProvider({ children }: { children: React.ReactNode })
     if (session?.user) {
       fetchLeaderboards();
     }
-  }, [session]);
-  
+  }, [session, fetchLeaderboards]);
+
   // When active leaderboard changes, fetch its entries
   useEffect(() => {
     if (activeLeaderboard) {
       fetchLeaderboardEntries(activeLeaderboard.id);
     }
-  }, [activeLeaderboard]);
+  }, [activeLeaderboard, fetchLeaderboardEntries]);
 
   return (
     <LeaderboardContext.Provider

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageOnboarding } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageOnboarding } from '@/lib/utils/permissions';
 
 // GET /api/onboarding/steps
 // Get all onboarding steps or filtered by trackId
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const trackId = searchParams.get("trackId");
+    const trackId = searchParams.get('trackId');
 
     // Filter by trackId if provided
     const where = trackId ? { trackId } : {};
@@ -42,19 +43,13 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [
-        { trackId: "asc" },
-        { order: "asc" },
-      ],
+      orderBy: [{ trackId: 'asc' }, { order: 'asc' }],
     });
 
     return NextResponse.json(steps);
   } catch (error) {
-    console.error("Error fetching onboarding steps:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch onboarding steps" },
-      { status: 500 }
-    );
+    console.error('Error fetching onboarding steps:', error);
+    return NextResponse.json({ error: 'Failed to fetch onboarding steps' }, { status: 500 });
   }
 }
 
@@ -66,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -93,7 +88,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!trackId || !title || !description) {
       return NextResponse.json(
-        { error: "Track ID, title, and description are required" },
+        { error: 'Track ID, title, and description are required' },
         { status: 400 }
       );
     }
@@ -104,10 +99,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!track) {
-      return NextResponse.json(
-        { error: "Onboarding track not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding track not found' }, { status: 404 });
     }
 
     // Create step with resources connection
@@ -120,11 +112,12 @@ export async function POST(request: NextRequest) {
         order: order || 1,
         estimatedDuration: estimatedDuration || null,
         isRequired: isRequired !== undefined ? isRequired : true,
-        resources: resourceIds && resourceIds.length > 0
-          ? {
-              connect: resourceIds.map((id: string) => ({ id })),
-            }
-          : undefined,
+        resources:
+          resourceIds && resourceIds.length > 0
+            ? {
+                connect: resourceIds.map((id: string) => ({ id })),
+              }
+            : undefined,
       },
       include: {
         resources: true,
@@ -133,10 +126,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(step, { status: 201 });
   } catch (error) {
-    console.error("Error creating onboarding step:", error);
-    return NextResponse.json(
-      { error: "Failed to create onboarding step" },
-      { status: 500 }
-    );
+    console.error('Error creating onboarding step:', error);
+    return NextResponse.json({ error: 'Failed to create onboarding step' }, { status: 500 });
   }
 }

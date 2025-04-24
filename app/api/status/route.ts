@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import os from 'os';
-import { withSentryAPI } from '@/monitoring/sentry.server.config';
+
+import prisma from '@/lib/prisma';
+
+interface DatabaseStats {
+  version: string;
+  db_size: string;
+  active_connections: string;
+  max_connections: string;
+}
 
 // Extended status endpoint with more detailed information
-export const GET = withSentryAPI(async (req: NextRequest) => {
+export async function GET(req: NextRequest) {
   try {
     // Check authorization
     // For security, we require an auth token for detailed system information
     const authToken = req.headers.get('x-status-auth');
     const isAuthorized = authToken === process.env.STATUS_AUTH_TOKEN;
-    const isLocalhost = req.headers.get('host')?.includes('localhost') || 
-                       req.headers.get('x-forwarded-for') === '127.0.0.1';
-    
+    const isLocalhost =
+      req.headers.get('host')?.includes('localhost') ||
+      req.headers.get('x-forwarded-for') === '127.0.0.1';
+
     // Basic status is available without auth
     if (!isAuthorized && !isLocalhost) {
       return NextResponse.json({
@@ -25,16 +33,16 @@ export const GET = withSentryAPI(async (req: NextRequest) => {
 
     // Begin timestamp for measuring response time
     const startTime = Date.now();
-    
+
     // Get database status
     const dbStatus = await getDatabaseStatus();
-    
+
     // Get system information
     const systemInfo = getSystemInfo();
-    
+
     // Get application stats
     const appStats = await getApplicationStats();
-    
+
     // Full status response
     const statusData = {
       status: dbStatus.status === 'connected' ? 'ok' : 'degraded',
@@ -46,31 +54,34 @@ export const GET = withSentryAPI(async (req: NextRequest) => {
       system: systemInfo,
       application: appStats,
     };
-    
+
     return NextResponse.json(statusData);
   } catch (error) {
     console.error('Status check failed:', error);
-    
+
     return NextResponse.json(
       {
         status: 'error',
         timestamp: new Date().toISOString(),
         error: 'Service unavailable',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details:
+          process.env.NODE_ENV === 'development' && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 503 }
     );
   }
-});
+}
 
 // Get detailed database status
 async function getDatabaseStatus() {
   try {
     // Run a simple query to check connection
     const start = Date.now();
-    const result = await prisma.$queryRaw`SELECT 1 as alive`;
+    await prisma.$queryRaw`SELECT 1 as alive`;
     const queryTime = Date.now() - start;
-    
+
     // Get database stats
     const dbStats = await prisma.$queryRaw`
       SELECT
@@ -79,7 +90,7 @@ async function getDatabaseStatus() {
         (SELECT setting::integer FROM pg_settings WHERE name='max_connections') as max_connections,
         version() as version
     `;
-    
+
     // Get table stats
     const tableStats = await prisma.$queryRaw`
       SELECT
@@ -91,16 +102,20 @@ async function getDatabaseStatus() {
       ORDER BY n_live_tup DESC
       LIMIT 10
     `;
-    
+
     return {
       status: 'connected',
       responseTime: `${queryTime}ms`,
-      version: dbStats[0].version,
-      size: formatBytes(parseInt(dbStats[0].db_size)),
+      version: (dbStats as DatabaseStats[])[0].version,
+      size: formatBytes(parseInt((dbStats as DatabaseStats[])[0].db_size)),
       connections: {
-        active: parseInt(dbStats[0].active_connections),
-        max: parseInt(dbStats[0].max_connections),
-        usagePercent: (parseInt(dbStats[0].active_connections) / parseInt(dbStats[0].max_connections) * 100).toFixed(2),
+        active: parseInt((dbStats as DatabaseStats[])[0].active_connections),
+        max: parseInt((dbStats as DatabaseStats[])[0].max_connections),
+        usagePercent: (
+          (parseInt((dbStats as DatabaseStats[])[0].active_connections) /
+            parseInt((dbStats as DatabaseStats[])[0].max_connections)) *
+          100
+        ).toFixed(2),
       },
       tables: tableStats,
     };
@@ -109,7 +124,10 @@ async function getDatabaseStatus() {
     return {
       status: 'error',
       error: 'Database connection failed',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details:
+        process.env.NODE_ENV === 'development' && error instanceof Error
+          ? error.message
+          : undefined,
     };
   }
 }
@@ -119,10 +137,10 @@ function getSystemInfo() {
   const freeMem = os.freemem();
   const totalMem = os.totalmem();
   const uptime = os.uptime();
-  
+
   const loadAvg = os.loadavg();
   const cpus = os.cpus();
-  
+
   return {
     hostname: os.hostname(),
     platform: os.platform(),
@@ -133,14 +151,14 @@ function getSystemInfo() {
       total: formatBytes(totalMem),
       free: formatBytes(freeMem),
       used: formatBytes(totalMem - freeMem),
-      usagePercent: ((totalMem - freeMem) / totalMem * 100).toFixed(2),
+      usagePercent: (((totalMem - freeMem) / totalMem) * 100).toFixed(2),
     },
     cpu: {
       model: cpus[0].model,
       cores: cpus.length,
       speed: `${cpus[0].speed} MHz`,
       loadAvg: loadAvg,
-      loadPercent: (loadAvg[0] / cpus.length * 100).toFixed(2),
+      loadPercent: ((loadAvg[0] / cpus.length) * 100).toFixed(2),
     },
     process: {
       pid: process.pid,
@@ -150,7 +168,10 @@ function getSystemInfo() {
         heapTotal: formatBytes(process.memoryUsage().heapTotal),
         heapUsed: formatBytes(process.memoryUsage().heapUsed),
         external: formatBytes(process.memoryUsage().external),
-        usagePercent: (process.memoryUsage().heapUsed / process.memoryUsage().heapTotal * 100).toFixed(2),
+        usagePercent: (
+          (process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) *
+          100
+        ).toFixed(2),
       },
       uptime: formatUptime(process.uptime()),
     },
@@ -165,42 +186,42 @@ async function getApplicationStats() {
     const activeUserCount = await prisma.user.count({
       where: {
         lastLoginAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-        }
-      }
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+        },
+      },
     });
-    
+
     // Count training modules
     const moduleCount = await prisma.trainingModule.count();
     const completedModuleCount = await prisma.trainingProgress.count({
       where: {
-        status: 'COMPLETED'
-      }
+        status: 'COMPLETED',
+      },
     });
-    
+
     // Count events
     const eventCount = await prisma.calendarEvent.count();
     const upcomingEventCount = await prisma.calendarEvent.count({
       where: {
         startDate: {
-          gte: new Date()
-        }
-      }
+          gte: new Date(),
+        },
+      },
     });
-    
+
     // Count notifications
     const notificationCount = await prisma.notification.count();
     const unreadNotificationCount = await prisma.notification.count({
       where: {
-        isRead: false
-      }
+        isRead: false,
+      },
     });
-    
+
     return {
       users: {
         total: userCount,
         active24h: activeUserCount,
-        activePercent: (activeUserCount / userCount * 100).toFixed(2),
+        activePercent: ((activeUserCount / userCount) * 100).toFixed(2),
       },
       training: {
         modules: moduleCount,
@@ -213,7 +234,7 @@ async function getApplicationStats() {
       notifications: {
         total: notificationCount,
         unread: unreadNotificationCount,
-        unreadPercent: (unreadNotificationCount / notificationCount * 100).toFixed(2),
+        unreadPercent: ((unreadNotificationCount / notificationCount) * 100).toFixed(2),
       },
     };
   } catch (error) {
@@ -227,13 +248,13 @@ async function getApplicationStats() {
 // Format bytes to human-readable format
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
@@ -243,12 +264,12 @@ function formatUptime(seconds: number) {
   const hours = Math.floor((seconds % (3600 * 24)) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   let result = '';
   if (days > 0) result += `${days}d `;
   if (hours > 0) result += `${hours}h `;
   if (minutes > 0) result += `${minutes}m `;
   result += `${secs}s`;
-  
+
   return result;
 }

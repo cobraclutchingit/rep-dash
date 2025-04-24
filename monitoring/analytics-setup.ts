@@ -1,16 +1,14 @@
-// Analytics Setup for Rep Dashboard
-// This file configures user behavior analytics using PostHog
-
-import posthog from 'posthog-js';
-import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { Session } from 'next-auth';
+import posthog from 'posthog-js';
+import { useEffect, useState } from 'react';
 
 // PostHog API key from environment
 const POSTHOG_API_KEY = process.env.NEXT_PUBLIC_POSTHOG_API_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
 
 // Initialize PostHog for analytics
-export const initAnalytics = () => {
+export const initAnalytics = (): void => {
   if (!POSTHOG_API_KEY) {
     console.warn('PostHog API key not found. Analytics tracking is disabled.');
     return;
@@ -28,21 +26,14 @@ export const initAnalytics = () => {
     persistence: 'localStorage',
     autocapture: false, // We'll be explicit about what we track
     disable_session_recording: process.env.NODE_ENV !== 'production',
-    property_blacklist: [
-      '$current_url',
-      '$pathname',
-      'password',
-      'email',
-      'username',
-      'name',
-    ],
+    property_blacklist: ['$current_url', '$pathname', 'password', 'email', 'username', 'name'],
   });
 
-  console.log('PostHog initialized for analytics');
+  console.warn('PostHog initialized for analytics');
 };
 
 // Custom hook for page view tracking
-export const usePageViewTracking = () => {
+export const usePageViewTracking = (): void => {
   const router = useRouter();
 
   useEffect(() => {
@@ -50,7 +41,7 @@ export const usePageViewTracking = () => {
     if (!POSTHOG_API_KEY || !posthog.__loaded) return;
 
     // Function to handle route changes
-    const handleRouteChange = (url) => {
+    const handleRouteChange = (url: string) => {
       // Don't track page views in development
       if (process.env.NODE_ENV === 'development') return;
 
@@ -74,7 +65,7 @@ export const usePageViewTracking = () => {
 };
 
 // Track authenticated user
-export const identifyUser = (user) => {
+export const identifyUser = (user: Session['user'] | null): void => {
   if (!POSTHOG_API_KEY || !posthog.__loaded) return;
 
   if (user && user.id) {
@@ -83,7 +74,6 @@ export const identifyUser = (user) => {
       name: user.name,
       role: user.role,
       position: user.position,
-      // Don't include sensitive information
     });
   } else {
     posthog.reset();
@@ -91,76 +81,62 @@ export const identifyUser = (user) => {
 };
 
 // Track custom events with proper typing
-export const trackEvent = (eventName, properties = {}) => {
+export const trackEvent = (eventName: string, properties: Record<string, unknown> = {}): void => {
   if (!POSTHOG_API_KEY || !posthog.__loaded) {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Analytics] ${eventName}`, properties);
+      console.warn(`[Analytics] ${eventName}`, properties);
     }
     return;
   }
 
   // Define business-critical events for consistent tracking
   const validEvents = [
-    // Auth events
     'user_login',
     'user_logout',
     'user_register',
     'password_reset_requested',
-    
-    // Training events
     'training_module_started',
     'training_module_completed',
     'quiz_completed',
     'certificate_earned',
-    
-    // Leaderboard events
     'leaderboard_viewed',
     'achievement_unlocked',
-    
-    // Calendar events
     'event_created',
     'event_registered',
-    
-    // Communication events
     'announcement_viewed',
     'notification_clicked',
-    
-    // Onboarding events
     'onboarding_step_completed',
     'onboarding_completed',
-    
-    // Feature usage
     'feature_used',
     'export_generated',
     'report_viewed',
-    
-    // Error events
     'error_encountered',
   ];
 
   // Validate event name
+  let validatedEventName = eventName;
   if (!validEvents.includes(eventName) && !eventName.startsWith('custom_')) {
     console.warn(`Invalid event name: ${eventName}. Using custom_ prefix.`);
-    eventName = `custom_${eventName}`;
+    validatedEventName = `custom_${eventName}`;
   }
 
   // Capture the event with sanitized properties
-  posthog.capture(eventName, {
+  posthog.capture(validatedEventName, {
     ...properties,
     timestamp: new Date().toISOString(),
   });
 };
 
 // Setup feature flags
-export const useFeatureFlags = () => {
-  const [flags, setFlags] = useState({});
-  
+export const useFeatureFlags = (): Record<string, boolean> => {
+  const [flags, setFlags] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (!POSTHOG_API_KEY || !posthog.__loaded) return;
-    
+
     const handleFlagsLoaded = () => {
-      const activeFlags = {};
-      
+      const activeFlags: Record<string, boolean> = {};
+
       // Check common feature flags
       const flagsToCheck = [
         'new-dashboard-enabled',
@@ -169,45 +145,50 @@ export const useFeatureFlags = () => {
         'enhanced-calendar',
         'ai-recommendations',
       ];
-      
-      flagsToCheck.forEach(flag => {
-        activeFlags[flag] = posthog.isFeatureEnabled(flag);
+
+      flagsToCheck.forEach((flag) => {
+        activeFlags[flag] = !!posthog.isFeatureEnabled(flag);
       });
-      
+
       setFlags(activeFlags);
     };
-    
+
     posthog.onFeatureFlags(handleFlagsLoaded);
-    
+
     // Load flags
     if (posthog.isFeatureEnabled) {
       handleFlagsLoaded();
     } else {
       posthog.loadFeatureFlags();
     }
-    
+
     return () => {
       // Clean up
       posthog.off('feature_flags_loaded');
     };
   }, []);
-  
+
   return flags;
 };
 
 // Funnel tracking helper
-export const trackFunnelStep = (funnel, step, properties = {}) => {
+export const trackFunnelStep = (
+  funnel: string,
+  step: string,
+  properties: Record<string, unknown> = {}
+): void => {
   if (!POSTHOG_API_KEY || !posthog.__loaded) return;
-  
+
   trackEvent(`${funnel}_step`, {
     funnel,
     step,
     step_number: properties.step_number,
-    ...properties
+    ...properties,
   });
 };
 
-export default {
+// Named export object
+const analytics = {
   initAnalytics,
   usePageViewTracking,
   identifyUser,
@@ -215,3 +196,5 @@ export default {
   useFeatureFlags,
   trackFunnelStep,
 };
+
+export default analytics;

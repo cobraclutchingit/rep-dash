@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageOnboarding } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageOnboarding } from '@/lib/utils/permissions';
 
 interface RouteParams {
   params: {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       include: {
         steps: {
           orderBy: {
-            order: "asc",
+            order: 'asc',
           },
           include: {
             resources: true,
@@ -47,19 +48,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!track) {
-      return NextResponse.json(
-        { error: "Onboarding track not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding track not found' }, { status: 404 });
     }
 
     return NextResponse.json(track);
   } catch (error) {
-    console.error("Error fetching onboarding track:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch onboarding track" },
-      { status: 500 }
-    );
+    console.error('Error fetching onboarding track:', error);
+    return NextResponse.json({ error: 'Failed to fetch onboarding track' }, { status: 500 });
   }
 }
 
@@ -72,7 +67,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -89,10 +84,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Validate required fields
     if (!name || !description) {
-      return NextResponse.json(
-        { error: "Name and description are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name and description are required' }, { status: 400 });
     }
 
     // Check if track exists
@@ -101,10 +93,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingTrack) {
-      return NextResponse.json(
-        { error: "Onboarding track not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding track not found' }, { status: 404 });
     }
 
     // Update the track
@@ -120,11 +109,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(updatedTrack);
   } catch (error) {
-    console.error("Error updating onboarding track:", error);
-    return NextResponse.json(
-      { error: "Failed to update onboarding track" },
-      { status: 500 }
-    );
+    console.error('Error updating onboarding track:', error);
+    return NextResponse.json({ error: 'Failed to update onboarding track' }, { status: 500 });
   }
 }
 
@@ -137,7 +123,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -159,10 +145,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingTrack) {
-      return NextResponse.json(
-        { error: "Onboarding track not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding track not found' }, { status: 404 });
     }
 
     // Delete the track and all associated steps
@@ -170,15 +153,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id },
     });
 
-    return NextResponse.json(
-      { message: "Onboarding track deleted successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Onboarding track deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Error deleting onboarding track:", error);
-    return NextResponse.json(
-      { error: "Failed to delete onboarding track" },
-      { status: 500 }
-    );
+    console.error('Error deleting onboarding track:', error);
+    return NextResponse.json({ error: 'Failed to delete onboarding track' }, { status: 500 });
   }
 }

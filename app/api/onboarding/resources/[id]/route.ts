@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageOnboarding } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageOnboarding } from '@/lib/utils/permissions';
 
 interface RouteParams {
   params: {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -38,19 +39,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!resource) {
-      return NextResponse.json(
-        { error: "Resource not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
     }
 
     return NextResponse.json(resource);
   } catch (error) {
-    console.error("Error fetching resource:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch resource" },
-      { status: 500 }
-    );
+    console.error('Error fetching resource:', error);
+    return NextResponse.json({ error: 'Failed to fetch resource' }, { status: 500 });
   }
 }
 
@@ -63,7 +58,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -80,20 +75,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Validate required fields
     if (!title || !type || !url) {
-      return NextResponse.json(
-        { error: "Title, type, and URL are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Title, type, and URL are required' }, { status: 400 });
     }
 
     // Validate URL format
     try {
       new URL(url);
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid URL format" },
-        { status: 400 }
-      );
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
     }
 
     // Check if resource exists
@@ -102,10 +91,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingResource) {
-      return NextResponse.json(
-        { error: "Resource not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
     }
 
     // Update the resource
@@ -122,11 +108,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(updatedResource);
   } catch (error) {
-    console.error("Error updating resource:", error);
-    return NextResponse.json(
-      { error: "Failed to update resource" },
-      { status: 500 }
-    );
+    console.error('Error updating resource:', error);
+    return NextResponse.json({ error: 'Failed to update resource' }, { status: 500 });
   }
 }
 
@@ -139,7 +122,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -161,10 +144,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingResource) {
-      return NextResponse.json(
-        { error: "Resource not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
     }
 
     // Delete the resource
@@ -172,15 +152,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id },
     });
 
-    return NextResponse.json(
-      { message: "Resource deleted successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Resource deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Error deleting resource:", error);
-    return NextResponse.json(
-      { error: "Failed to delete resource" },
-      { status: 500 }
-    );
+    console.error('Error deleting resource:', error);
+    return NextResponse.json({ error: 'Failed to delete resource' }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
 interface TopModulesTableProps {
   modules: Array<{
@@ -24,32 +24,28 @@ export default function TopModulesTable({ modules }: TopModulesTableProps) {
             <th className="px-4 py-2 text-left text-sm font-semibold">In Progress</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-muted/50">
+        <tbody className="divide-muted/50 divide-y">
           {modules.map((module) => (
             <tr key={module.id} className="hover:bg-muted/40">
               <td className="px-4 py-2 text-sm">
-                <Link 
+                <Link
                   href={`/training/admin/modules/${module.id}`}
-                  className="font-medium hover:text-primary"
+                  className="hover:text-primary font-medium"
                 >
                   {module.title}
                 </Link>
               </td>
-              <td className="px-4 py-2 text-sm">
-                {module.category.replace(/_/g, " ")}
-              </td>
+              <td className="px-4 py-2 text-sm">{module.category.replace(/_/g, ' ')}</td>
               <td className="px-4 py-2 text-sm">
                 <span className="font-medium">{module.completed}</span>
               </td>
-              <td className="px-4 py-2 text-sm">
-                {module.inProgress}
-              </td>
+              <td className="px-4 py-2 text-sm">{module.inProgress}</td>
             </tr>
           ))}
-          
+
           {modules.length === 0 && (
             <tr>
-              <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+              <td colSpan={4} className="text-muted-foreground px-4 py-8 text-center">
                 No module data available.
               </td>
             </tr>

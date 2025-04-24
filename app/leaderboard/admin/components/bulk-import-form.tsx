@@ -1,331 +1,150 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 
-interface BulkImportFormProps {
-  leaderboardId: string;
-  onSuccess?: () => void;
-  onCancel?: () => void;
-}
-
-export default function BulkImportForm({
-  leaderboardId,
-  onSuccess,
-  onCancel,
-}: BulkImportFormProps) {
+export default function LoginPage() {
   const router = useRouter();
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
-  const [csvData, setCsvData] = useState("");
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [parseError, setParseError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<any[]>([]);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Initialize default dates (current month)
-  React.useEffect(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    setPeriodStart(startOfMonth.toISOString().split("T")[0]);
-    setPeriodEnd(endOfMonth.toISOString().split("T")[0]);
-  }, []);
+  // Get callbackUrl from URL if it exists
+  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
+  const registered = searchParams?.get('registered');
 
-  // Parse CSV data
-  const parseCSV = (data: string) => {
-    try {
-      setParseError(null);
-      
-      // Split by newlines and filter out empty lines
-      const lines = data.split("\n").filter(line => line.trim());
-      if (lines.length === 0) {
-        setParseError("CSV file is empty");
-        return [];
-      }
-      
-      // Parse header row
-      const headers = lines[0].split(",").map(h => h.trim());
-      if (!headers.includes("email") && !headers.includes("userId")) {
-        setParseError("CSV must contain either 'email' or 'userId' column");
-        return [];
-      }
-      
-      if (!headers.includes("score")) {
-        setParseError("CSV must contain 'score' column");
-        return [];
-      }
-      
-      // Parse data rows
-      const parsedData = lines.slice(1).map((line, index) => {
-        const values = line.split(",").map(v => v.trim());
-        
-        // Skip if wrong number of columns
-        if (values.length !== headers.length) {
-          console.warn(`Skipping line ${index + 2}: incorrect number of columns`);
-          return null;
-        }
-        
-        // Create object from headers and values
-        const entry: Record<string, any> = {};
-        headers.forEach((header, i) => {
-          // Parse score and numeric metrics as numbers
-          if (header === "score" || (!["email", "userId", "name"].includes(header) && !isNaN(Number(values[i])))) {
-            entry[header] = parseFloat(values[i]);
-          } else {
-            entry[header] = values[i];
-          }
-        });
-        
-        return entry;
-      }).filter(Boolean); // Remove null entries
-      
-      if (parsedData.length === 0) {
-        setParseError("No valid data rows found");
-        return [];
-      }
-      
-      return parsedData;
-    } catch (err) {
-      setParseError("Error parsing CSV: " + (err instanceof Error ? err.message : String(err)));
-      return [];
+  useEffect(() => {
+    // If the user was redirected after registration, show success message
+    if (registered === 'true') {
+      setSuccessMessage('Registration successful! Please sign in to continue.');
     }
-  };
+  }, [registered]);
 
-  // Handle CSV input change
-  const handleCsvChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const data = e.target.value;
-    setCsvData(data);
-    
-    if (data.trim()) {
-      const parsed = parseCSV(data);
-      setPreview(parsed.slice(0, 5)); // Show first 5 rows in preview
-    } else {
-      setPreview([]);
-    }
-  };
-
-  // Handle file upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setCsvData(content);
-      
-      if (content.trim()) {
-        const parsed = parseCSV(content);
-        setPreview(parsed.slice(0, 5)); // Show first 5 rows in preview
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    
-    if (!csvData.trim()) {
-      setError("Please enter CSV data");
-      setLoading(false);
-      return;
-    }
-    
-    if (!periodStart || !periodEnd) {
-      setError("Please specify the performance period");
-      setLoading(false);
-      return;
-    }
-    
+    setError('');
+
     try {
-      const parsedData = parseCSV(csvData);
-      if (parseError || parsedData.length === 0) {
-        throw new Error(parseError || "No valid data to import");
-      }
-      
-      // Prepare data for import
-      const importData = {
-        leaderboardId,
-        periodStart,
-        periodEnd,
-        entries: parsedData
-      };
-      
-      const response = await fetch(`/api/leaderboard/${leaderboardId}/entries/bulk`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(importData),
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to import data");
-      }
-      
-      const result = await response.json();
-      
-      // Refresh and redirect
-      router.refresh();
-      
-      if (onSuccess) {
-        onSuccess();
+
+      if (result?.error) {
+        setError('Invalid email or password');
       } else {
-        router.push(`/leaderboard/admin/board/${leaderboardId}`);
+        router.push(callbackUrl);
+        router.refresh();
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error importing data:", err);
+    } catch {
+      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-destructive/10 text-destructive p-3 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="periodStart" className="block text-sm font-medium mb-1">
-              Period Start *
-            </label>
-            <input
-              id="periodStart"
-              type="date"
-              value={periodStart}
-              onChange={(e) => setPeriodStart(e.target.value)}
-              required
-              className="w-full rounded-md border-input bg-background px-3 py-2"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="periodEnd" className="block text-sm font-medium mb-1">
-              Period End *
-            </label>
-            <input
-              id="periodEnd"
-              type="date"
-              value={periodEnd}
-              onChange={(e) => setPeriodEnd(e.target.value)}
-              required
-              className="w-full rounded-md border-input bg-background px-3 py-2"
-            />
-          </div>
-        </div>
-        
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
         <div>
-          <label htmlFor="csv-file" className="block text-sm font-medium mb-1">
-            Upload CSV File
-          </label>
-          <input
-            id="csv-file"
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="w-full rounded-md border-input bg-background px-3 py-2"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Upload a CSV file or paste data below
-          </p>
+          <h1 className="text-primary text-center text-3xl font-bold tracking-tight">
+            Sales Rep Dashboard
+          </h1>
+          <h2 className="text-foreground mt-6 text-center text-2xl font-bold tracking-tight">
+            Sign in to your account
+          </h2>
         </div>
-        
-        <div>
-          <label htmlFor="csv-data" className="block text-sm font-medium mb-1">
-            CSV Data *
-          </label>
-          <textarea
-            id="csv-data"
-            value={csvData}
-            onChange={handleCsvChange}
-            rows={10}
-            placeholder="email,score,sales,calls,meetings
-john@example.com,850,42,120,35
-jane@example.com,920,48,150,40"
-            className="w-full rounded-md border-input bg-background px-3 py-2 font-mono text-sm"
-            required
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            CSV must include either 'email' or 'userId' column, and a 'score' column. 
-            Additional columns will be imported as metrics.
-          </p>
-        </div>
-        
-        {parseError && (
-          <div className="bg-amber-500/10 text-amber-500 p-3 rounded-md text-sm">
-            {parseError}
-          </div>
+
+        {successMessage && (
+          <div className="rounded-md bg-green-100 p-3 text-sm text-green-800">{successMessage}</div>
         )}
-        
-        {preview.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium mb-2">Preview (first 5 rows):</h3>
-            <div className="bg-muted/30 p-3 rounded-md overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b">
-                    {Object.keys(preview[0]).map((key) => (
-                      <th key={key} className="px-2 py-1 text-left">{key}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.map((row, i) => (
-                    <tr key={i} className="border-b border-muted/20">
-                      {Object.values(row).map((value, j) => (
-                        <td key={j} className="px-2 py-1">
-                          {typeof value === 'string' ? value : String(value)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4 rounded-md shadow-sm">
+            <div>
+              <label htmlFor="email" className="mb-1 block text-sm font-medium">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="text-foreground bg-background ring-input focus:ring-primary relative block w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 sm:text-sm sm:leading-6"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {parseError 
-                ? "Please fix the errors above before importing." 
-                : `${preview.length} rows shown. Full import will process all ${parseCSV(csvData).length} rows.`}
-            </p>
+            <div>
+              <label htmlFor="password" className="mb-1 block text-sm font-medium">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="text-foreground bg-background ring-input focus:ring-primary relative block w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 sm:text-sm sm:leading-6"
+                placeholder="Your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:text-primary/80 font-medium"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-      
-      <div className="flex justify-end space-x-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
-          disabled={loading || !!parseError}
-        >
-          {loading ? (
-            <span className="flex items-center">
-              <span className="mr-2 h-4 w-4 border-2 border-primary-foreground border-t-transparent animate-spin rounded-full"></span>
-              Importing...
-            </span>
-          ) : (
-            "Import Data"
+
+          {error && (
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>
           )}
-        </button>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-primary relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+
+          <div className="text-center text-sm">
+            <Link href="/register" className="text-primary hover:text-primary/80 font-medium">
+              Need an account? Sign up
+            </Link>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

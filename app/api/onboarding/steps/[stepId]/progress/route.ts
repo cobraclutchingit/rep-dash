@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 interface RouteParams {
   params: {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -27,9 +28,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { status, notes } = await request.json();
 
     // Validate status
-    if (!status || !["NOT_STARTED", "IN_PROGRESS", "COMPLETED"].includes(status)) {
+    if (!status || !['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'].includes(status)) {
       return NextResponse.json(
-        { error: "Invalid status. Must be one of: NOT_STARTED, IN_PROGRESS, COMPLETED" },
+        { error: 'Invalid status. Must be one of: NOT_STARTED, IN_PROGRESS, COMPLETED' },
         { status: 400 }
       );
     }
@@ -40,10 +41,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!step) {
-      return NextResponse.json(
-        { error: "Onboarding step not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding step not found' }, { status: 404 });
     }
 
     // Check if progress record already exists
@@ -72,8 +70,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           status,
           notes: notes !== undefined ? notes : existingProgress.notes,
           // Update timestamps based on status
-          startedAt: status === "IN_PROGRESS" && !existingProgress.startedAt ? now : existingProgress.startedAt,
-          completedAt: status === "COMPLETED" ? now : existingProgress.completedAt,
+          startedAt:
+            status === 'IN_PROGRESS' && !existingProgress.startedAt
+              ? now
+              : existingProgress.startedAt,
+          completedAt: status === 'COMPLETED' ? now : existingProgress.completedAt,
         },
       });
     } else {
@@ -84,19 +85,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           stepId,
           status,
           notes,
-          startedAt: status === "IN_PROGRESS" || status === "COMPLETED" ? now : null,
-          completedAt: status === "COMPLETED" ? now : null,
+          startedAt: status === 'IN_PROGRESS' || status === 'COMPLETED' ? now : null,
+          completedAt: status === 'COMPLETED' ? now : null,
         },
       });
     }
 
     return NextResponse.json(progress);
   } catch (error) {
-    console.error("Error updating step progress:", error);
-    return NextResponse.json(
-      { error: "Failed to update step progress" },
-      { status: 500 }
-    );
+    console.error('Error updating step progress:', error);
+    return NextResponse.json({ error: 'Failed to update step progress' }, { status: 500 });
   }
 }
 
@@ -109,7 +107,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -122,10 +120,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!step) {
-      return NextResponse.json(
-        { error: "Onboarding step not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding step not found' }, { status: 404 });
     }
 
     // Delete the progress record
@@ -136,15 +131,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return NextResponse.json(
-      { message: "Step progress reset successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Step progress reset successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Error resetting step progress:", error);
-    return NextResponse.json(
-      { error: "Failed to reset step progress" },
-      { status: 500 }
-    );
+    console.error('Error resetting step progress:', error);
+    return NextResponse.json({ error: 'Failed to reset step progress' }, { status: 500 });
   }
 }

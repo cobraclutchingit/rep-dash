@@ -1,59 +1,79 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ContentFormat, TrainingSection, TrainingProgress } from "@prisma/client";
-import SectionQuiz from "./section-quiz";
+import { TrainingSection, TrainingProgress } from '@prisma/client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import SectionQuiz from './section-quiz';
+
+interface Resource {
+  id: string;
+  title: string;
+  url: string;
+  description: string | null;
+}
+
+interface QuizQuestion {
+  id: string;
+  question: string;
+  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'OPEN_ENDED';
+  points: number;
+  options: {
+    id: string;
+    text: string;
+    isCorrect: boolean;
+  }[];
+}
 
 interface ModuleContentProps {
   moduleId: string;
   section: TrainingSection & {
-    resources: any[];
-    quizQuestions: any[];
+    resources: Resource[];
+    quizQuestions: QuizQuestion[];
   };
   progress: TrainingProgress;
   totalSections: number;
 }
 
-export default function ModuleContent({ 
-  moduleId, 
-  section, 
-  progress, 
-  totalSections 
+export default function ModuleContent({
+  moduleId,
+  section,
+  progress,
+  totalSections,
 }: ModuleContentProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const currentSectionIndex = progress.currentSection || 0;
   const isLastSection = currentSectionIndex === totalSections - 1;
-  
+
   const handleNextSection = async () => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Calculate new progress percentage
       const newSectionIndex = currentSectionIndex + 1;
       const percentComplete = Math.round((newSectionIndex / totalSections) * 100);
-      
+
       // Determine if module is complete
       const isComplete = isLastSection;
-      
+
       // Update progress
       const response = await fetch(`/api/training/modules/${moduleId}/progress`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           currentSection: isComplete ? currentSectionIndex : newSectionIndex,
           percentComplete,
-          status: isComplete ? "COMPLETED" : "IN_PROGRESS",
+          status: isComplete ? 'COMPLETED' : 'IN_PROGRESS',
           completedAt: isComplete ? new Date().toISOString() : null,
         }),
       });
-      
+
       if (response.ok) {
         if (isComplete) {
           // Redirect to completion page or certificate
@@ -63,55 +83,56 @@ export default function ModuleContent({
           router.refresh();
         }
       } else {
-        console.error("Failed to update progress");
+        console.error('Failed to update progress');
       }
     } catch (error) {
-      console.error("Error updating progress:", error);
+      console.error('Error updating progress:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   const renderContent = () => {
     switch (section.contentFormat) {
-      case "HTML":
+      case 'HTML':
         return (
-          <div className="prose dark:prose-invert max-w-none" 
-               dangerouslySetInnerHTML={{ __html: section.content }} 
+          <div
+            className="prose dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: section.content }}
           />
         );
-      
-      case "MARKDOWN":
+
+      case 'MARKDOWN':
         return (
           <div className="prose dark:prose-invert max-w-none">
             {/* In a real app, you would use a markdown parser here */}
             <pre className="whitespace-pre-wrap">{section.content}</pre>
           </div>
         );
-        
-      case "VIDEO":
+
+      case 'VIDEO':
         return (
-          <div className="aspect-video mb-4">
+          <div className="mb-4 aspect-video">
             <iframe
               src={section.content}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="w-full h-full rounded-md"
+              className="h-full w-full rounded-md"
             />
           </div>
         );
-        
-      case "PDF":
+
+      case 'PDF':
         return (
           <div className="mb-4">
             <iframe
               src={`/api/training/resources/view?url=${encodeURIComponent(section.content)}`}
-              className="w-full h-[600px] rounded-md border"
+              className="h-[600px] w-full rounded-md border"
             />
           </div>
         );
-        
-      case "QUIZ":
+
+      case 'QUIZ':
         return (
           <SectionQuiz
             moduleId={moduleId}
@@ -120,23 +141,21 @@ export default function ModuleContent({
             onComplete={handleNextSection}
           />
         );
-        
+
       default:
         return <p>Unsupported content format: {section.contentFormat}</p>;
     }
   };
-  
+
   return (
-    <div className="bg-card text-card-foreground rounded-lg shadow p-6 mb-8">
-      <h2 className="text-2xl font-bold mb-6">{section.title}</h2>
-      
-      <div className="mb-8">
-        {renderContent()}
-      </div>
-      
+    <div className="bg-card text-card-foreground mb-8 rounded-lg p-6 shadow">
+      <h2 className="mb-6 text-2xl font-bold">{section.title}</h2>
+
+      <div className="mb-8">{renderContent()}</div>
+
       {section.resources.length > 0 && (
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">Additional Resources</h3>
+          <h3 className="mb-4 text-lg font-semibold">Additional Resources</h3>
           <div className="space-y-2">
             {section.resources.map((resource) => (
               <a
@@ -144,13 +163,13 @@ export default function ModuleContent({
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center p-3 rounded-md bg-secondary/50 hover:bg-secondary"
+                className="bg-secondary/50 hover:bg-secondary flex items-center rounded-md p-3"
               >
                 <span className="mr-2">📎</span>
                 <div>
                   <p className="font-medium">{resource.title}</p>
                   {resource.description && (
-                    <p className="text-sm text-muted-foreground">{resource.description}</p>
+                    <p className="text-muted-foreground text-sm">{resource.description}</p>
                   )}
                 </div>
               </a>
@@ -158,15 +177,15 @@ export default function ModuleContent({
           </div>
         </div>
       )}
-      
-      {section.contentFormat !== "QUIZ" && (
+
+      {section.contentFormat !== 'QUIZ' && (
         <div className="flex justify-end">
           <button
             onClick={handleNextSection}
             disabled={isSubmitting}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 disabled:opacity-50"
           >
-            {isLastSection ? "Complete Module" : "Next Section"}
+            {isLastSection ? 'Complete Module' : 'Next Section'}
           </button>
         </div>
       )}

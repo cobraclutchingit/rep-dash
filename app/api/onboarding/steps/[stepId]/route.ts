@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageOnboarding } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageOnboarding } from '@/lib/utils/permissions';
 
 interface RouteParams {
   params: {
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -39,10 +41,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!step) {
-      return NextResponse.json(
-        { error: "Onboarding step not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding step not found' }, { status: 404 });
     }
 
     // If not an admin, check if the step's track is for the user's position
@@ -52,9 +51,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         select: { position: true },
       });
 
-      const isForUser = !step.track.forPositions.length || 
-                        (user?.position && step.track.forPositions.includes(user.position));
-      
+      const isForUser =
+        !step.track.forPositions.length ||
+        (user?.position && step.track.forPositions.includes(user.position));
+
       if (!isForUser) {
         return NextResponse.json(
           { error: "You don't have access to this onboarding step" },
@@ -65,11 +65,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(step);
   } catch (error) {
-    console.error("Error fetching onboarding step:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch onboarding step" },
-      { status: 500 }
-    );
+    console.error('Error fetching onboarding step:', error);
+    return NextResponse.json({ error: 'Failed to fetch onboarding step' }, { status: 500 });
   }
 }
 
@@ -82,7 +79,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -115,19 +112,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingStep) {
-      return NextResponse.json(
-        { error: "Onboarding step not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding step not found' }, { status: 404 });
     }
 
     // Validate required fields if provided
-    if ((title === undefined || title === '') || 
-        (description === undefined || description === '')) {
-      return NextResponse.json(
-        { error: "Title and description cannot be empty" },
-        { status: 400 }
-      );
+    if (title === undefined || title === '' || description === undefined || description === '') {
+      return NextResponse.json({ error: 'Title and description cannot be empty' }, { status: 400 });
     }
 
     // If trackId is changing, verify the target track exists
@@ -137,34 +127,31 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       });
 
       if (!track) {
-        return NextResponse.json(
-          { error: "Target onboarding track not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'Target onboarding track not found' }, { status: 404 });
       }
     }
 
     // Prepare the update data
-    const updateData: any = {};
-    
+    const updateData: Prisma.OnboardingStepUpdateInput = {};
+
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (trackId !== undefined) updateData.trackId = trackId;
+    if (trackId !== undefined) updateData.track = { connect: { id: trackId } };
     if (instructions !== undefined) updateData.instructions = instructions;
     if (order !== undefined) updateData.order = order;
     if (estimatedDuration !== undefined) updateData.estimatedDuration = estimatedDuration;
     if (isRequired !== undefined) updateData.isRequired = isRequired;
-    
+
     // Handle resource connections if resourceIds are provided
     if (resourceIds !== undefined) {
       // Get current resource IDs
-      const currentResourceIds = existingStep.resources.map(r => r.id);
-      
+      const currentResourceIds = existingStep.resources.map((r) => r.id);
+
       // Disconnect all current resources
       updateData.resources = {
-        disconnect: currentResourceIds.map(id => ({ id })),
+        disconnect: currentResourceIds.map((id) => ({ id })),
       };
-      
+
       // Connect new resources if any
       if (resourceIds.length > 0) {
         updateData.resources = {
@@ -185,11 +172,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(updatedStep);
   } catch (error) {
-    console.error("Error updating onboarding step:", error);
-    return NextResponse.json(
-      { error: "Failed to update onboarding step" },
-      { status: 500 }
-    );
+    console.error('Error updating onboarding step:', error);
+    return NextResponse.json({ error: 'Failed to update onboarding step' }, { status: 500 });
   }
 }
 
@@ -202,7 +186,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -221,10 +205,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingStep) {
-      return NextResponse.json(
-        { error: "Onboarding step not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding step not found' }, { status: 404 });
     }
 
     // Delete the step (this will cascade delete progress and disconnect resources)
@@ -232,15 +213,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id: stepId },
     });
 
-    return NextResponse.json(
-      { message: "Onboarding step deleted successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Onboarding step deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Error deleting onboarding step:", error);
-    return NextResponse.json(
-      { error: "Failed to delete onboarding step" },
-      { status: 500 }
-    );
+    console.error('Error deleting onboarding step:', error);
+    return NextResponse.json({ error: 'Failed to delete onboarding step' }, { status: 500 });
   }
 }

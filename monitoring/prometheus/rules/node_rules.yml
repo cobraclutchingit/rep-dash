@@ -1,102 +1,102 @@
 groups:
-- name: node_alerts
-  rules:
-  # CPU usage high
-  - alert: HighCPULoad
-    expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High CPU load (instance {{ $labels.instance }})"
-      description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+  - name: node_alerts
+    rules:
+      # CPU usage high
+      - alert: HighCPULoad
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High CPU load (instance {{ $labels.instance }})'
+          description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Memory usage high
-  - alert: HighMemoryUsage
-    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High memory usage (instance {{ $labels.instance }})"
-      description: "Memory usage is > 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Memory usage high
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High memory usage (instance {{ $labels.instance }})'
+          description: "Memory usage is > 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Disk space running out
-  - alert: DiskSpaceRunningOut
-    expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Disk space running out (instance {{ $labels.instance }})"
-      description: "Disk space is < 10% free\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Disk space running out
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Disk space running out (instance {{ $labels.instance }})'
+          description: "Disk space is < 10% free\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Critical disk space
-  - alert: CriticalDiskSpace
-    expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Critical disk space (instance {{ $labels.instance }})"
-      description: "Disk space is < 5% free\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Critical disk space
+      - alert: CriticalDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Critical disk space (instance {{ $labels.instance }})'
+          description: "Disk space is < 5% free\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Unusual network traffic
-  - alert: UnusualNetworkTrafficIn
-    expr: sum by (instance) (irate(node_network_receive_bytes_total[5m])) / 1024 / 1024 > 100
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Unusual network traffic in (instance {{ $labels.instance }})"
-      description: "Network traffic in is > 100 MB/s\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Unusual network traffic
+      - alert: UnusualNetworkTrafficIn
+        expr: sum by (instance) (irate(node_network_receive_bytes_total[5m])) / 1024 / 1024 > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Unusual network traffic in (instance {{ $labels.instance }})'
+          description: "Network traffic in is > 100 MB/s\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # High system load
-  - alert: HighSystemLoad
-    expr: node_load1 / on(instance) count by(instance) (node_cpu_seconds_total{mode="idle"}) > 2
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High system load (instance {{ $labels.instance }})"
-      description: "System load is > 2x the number of CPU cores\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # High system load
+      - alert: HighSystemLoad
+        expr: node_load1 / on(instance) count by(instance) (node_cpu_seconds_total{mode="idle"}) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High system load (instance {{ $labels.instance }})'
+          description: "System load is > 2x the number of CPU cores\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Out of file descriptors
-  - alert: OutOfFileDescriptors
-    expr: node_filefd_allocated / node_filefd_maximum * 100 > 80
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Out of file descriptors (instance {{ $labels.instance }})"
-      description: "File descriptors usage is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Out of file descriptors
+      - alert: OutOfFileDescriptors
+        expr: node_filefd_allocated / node_filefd_maximum * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Out of file descriptors (instance {{ $labels.instance }})'
+          description: "File descriptors usage is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Unusual disk read latency
-  - alert: UnusualDiskReadLatency
-    expr: rate(node_disk_read_time_seconds_total[1m]) / rate(node_disk_reads_completed_total[1m]) > 0.1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Unusual disk read latency (instance {{ $labels.instance }})"
-      description: "Disk read latency is > 100ms\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Unusual disk read latency
+      - alert: UnusualDiskReadLatency
+        expr: rate(node_disk_read_time_seconds_total[1m]) / rate(node_disk_reads_completed_total[1m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Unusual disk read latency (instance {{ $labels.instance }})'
+          description: "Disk read latency is > 100ms\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Unusual disk write latency
-  - alert: UnusualDiskWriteLatency
-    expr: rate(node_disk_write_time_seconds_total[1m]) / rate(node_disk_writes_completed_total[1m]) > 0.1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Unusual disk write latency (instance {{ $labels.instance }})"
-      description: "Disk write latency is > 100ms\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Unusual disk write latency
+      - alert: UnusualDiskWriteLatency
+        expr: rate(node_disk_write_time_seconds_total[1m]) / rate(node_disk_writes_completed_total[1m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Unusual disk write latency (instance {{ $labels.instance }})'
+          description: "Disk write latency is > 100ms\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  # Instance down
-  - alert: InstanceDown
-    expr: up == 0
-    for: 3m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Instance down (instance {{ $labels.instance }})"
-      description: "Instance has been down for more than 3 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      # Instance down
+      - alert: InstanceDown
+        expr: up == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Instance down (instance {{ $labels.instance }})'
+          description: "Instance has been down for more than 3 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

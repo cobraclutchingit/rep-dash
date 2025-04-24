@@ -4,87 +4,101 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    /* Modern RGB format for Tailwind v4 compatibility */
+    --color-background: 255 255 255;
+    --color-foreground: 17 24 39;
+    --color-card: 255 255 255;
+    --color-card-foreground: 17 24 39;
+    --color-popover: 255 255 255;
+    --color-popover-foreground: 17 24 39;
+    --color-primary: 31 41 55;
+    --color-primary-foreground: 249 250 251;
+    --color-secondary: 243 244 246;
+    --color-secondary-foreground: 31 41 55;
+    --color-muted: 243 244 246;
+    --color-muted-foreground: 107 114 128;
+    --color-accent: 243 244 246;
+    --color-accent-foreground: 31 41 55;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 249 250 251;
+    --color-border: 229 231 235;
+    --color-input: 229 231 235;
+    --color-ring: 31 41 55;
     --radius: 0.5rem;
-    
+
+    /* Font Variables */
+    --font-geist-sans: 'Inter', sans-serif;
+    --font-geist-mono: 'Inter', monospace;
+
     /* Accent Colors */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
-    --info: 212 96% 62%;
-    --info-foreground: 0 0% 98%;
-    
+    --color-success: 22 163 74;
+    --color-success-foreground: 249 250 251;
+    --color-warning: 245 158 11;
+    --color-warning-foreground: 0 0 0;
+    --color-info: 59 130 246;
+    --color-info-foreground: 249 250 251;
+
     /* Semantic Colors */
-    --new: 262 83% 58%;
-    --in-progress: 212 96% 62%;
-    --completed: 142 76% 36%;
-    --cancelled: 0 84.2% 60.2%;
-    --scheduled: 245 58% 52%;
+    --color-status-new: 147 51 234;
+    --color-status-in-progress: 59 130 246;
+    --color-status-completed: 22 163 74;
+    --color-status-cancelled: 239 68 68;
+    --color-status-scheduled: 79 70 229;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    
+    /* Dark mode values */
+    --color-background: 17 24 39;
+    --color-foreground: 249 250 251;
+    --color-card: 17 24 39;
+    --color-card-foreground: 249 250 251;
+    --color-popover: 17 24 39;
+    --color-popover-foreground: 249 250 251;
+    --color-primary: 249 250 251;
+    --color-primary-foreground: 31 41 55;
+    --color-secondary: 31 41 55;
+    --color-secondary-foreground: 249 250 251;
+    --color-muted: 31 41 55;
+    --color-muted-foreground: 156 163 175;
+    --color-accent: 31 41 55;
+    --color-accent-foreground: 249 250 251;
+    --color-destructive: 127 29 29;
+    --color-destructive-foreground: 249 250 251;
+    --color-border: 31 41 55;
+    --color-input: 31 41 55;
+    --color-ring: 209 213 219;
+
     /* Accent Colors */
-    --success: 142 76% 45%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 0%;
-    --info: 212 96% 70%;
-    --info-foreground: 0 0% 98%;
-    
+    --color-success: 34 197 94;
+    --color-success-foreground: 249 250 251;
+    --color-warning: 245 158 11;
+    --color-warning-foreground: 0 0 0;
+    --color-info: 59 130 246;
+    --color-info-foreground: 249 250 251;
+
     /* Semantic Colors */
-    --new: 262 83% 65%;
-    --in-progress: 212 96% 70%;
-    --completed: 142 76% 45%;
-    --cancelled: 0 84.2% 60.2%;
-    --scheduled: 245 58% 60%;
+    --color-status-new: 167 139 250;
+    --color-status-in-progress: 96 165 250;
+    --color-status-completed: 34 197 94;
+    --color-status-cancelled: 248 113 113;
+    --color-status-scheduled: 99 102 241;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: rgb(var(--color-border));
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-foreground));
+    font-family: var(--font-geist-sans);
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+  code,
+  pre {
+    font-family: var(--font-geist-mono);
   }
 }

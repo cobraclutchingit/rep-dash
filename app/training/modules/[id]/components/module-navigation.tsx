@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ContentFormat, TrainingSection } from "@prisma/client";
+import { ContentFormat, TrainingSection } from '@prisma/client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface ModuleNavigationProps {
   moduleId: string;
@@ -10,20 +10,20 @@ interface ModuleNavigationProps {
   currentSection: number;
 }
 
-export default function ModuleNavigation({ 
-  moduleId, 
-  sections, 
-  currentSection 
+export default function ModuleNavigation({
+  moduleId,
+  sections,
+  currentSection,
 }: ModuleNavigationProps) {
   const router = useRouter();
   const [isNavExpanded, setIsNavExpanded] = useState(false);
-  
+
   const handleSectionClick = (sectionIndex: number) => {
     // Navigate to update the current section via API
     fetch(`/api/training/modules/${moduleId}/progress`, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ currentSection: sectionIndex }),
     })
@@ -34,63 +34,61 @@ export default function ModuleNavigation({
         }
       })
       .catch((error) => {
-        console.error("Failed to update current section:", error);
+        console.error('Failed to update current section:', error);
       });
   };
-  
+
   // Generate content type icon based on format
   const getContentIcon = (format: ContentFormat) => {
     switch (format) {
-      case "HTML":
-      case "MARKDOWN":
-        return "📄";
-      case "VIDEO":
-        return "🎬";
-      case "PDF":
-        return "📑";
-      case "QUIZ":
-        return "❓";
+      case 'HTML':
+      case 'MARKDOWN':
+        return '📄';
+      case 'VIDEO':
+        return '🎬';
+      case 'PDF':
+        return '📑';
+      case 'QUIZ':
+        return '❓';
       default:
-        return "📝";
+        return '📝';
     }
   };
-  
+
   return (
     <div className="mb-6">
-      <div className="bg-card text-card-foreground rounded-lg shadow overflow-hidden">
-        <div 
-          className="p-4 flex justify-between items-center cursor-pointer hover:bg-muted/50"
+      <div className="bg-card text-card-foreground overflow-hidden rounded-lg shadow">
+        <div
+          className="hover:bg-muted/50 flex cursor-pointer items-center justify-between p-4"
           onClick={() => setIsNavExpanded(!isNavExpanded)}
         >
           <h2 className="font-semibold">Module Sections</h2>
-          <span>{isNavExpanded ? "▲" : "▼"}</span>
+          <span>{isNavExpanded ? '▲' : '▼'}</span>
         </div>
-        
+
         {isNavExpanded && (
           <div className="border-t p-4">
             <div className="space-y-2">
               {sections.map((section, index) => (
-                <div 
+                <div
                   key={section.id}
-                  onClick={() => handleSectionClick(index)} 
-                  className={`p-3 rounded-md flex items-center cursor-pointer transition-colors ${
-                    currentSection === index 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-muted"
+                  onClick={() => handleSectionClick(index)}
+                  className={`flex cursor-pointer items-center rounded-md p-3 transition-colors ${
+                    currentSection === index
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-muted'
                   }`}
                 >
-                  <div className="flex-shrink-0 mr-3">{getContentIcon(section.contentFormat)}</div>
+                  <div className="mr-3 flex-shrink-0">{getContentIcon(section.contentFormat)}</div>
                   <div className="flex-grow">
                     <h3 className="font-medium">{section.title}</h3>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {section.contentFormat}
-                      {section.isOptional && " • Optional"}
+                      {section.isOptional && ' • Optional'}
                     </p>
                   </div>
                   {currentSection === index && (
-                    <div className="flex-shrink-0 ml-2 text-sm">
-                      Current
-                    </div>
+                    <div className="ml-2 flex-shrink-0 text-sm">Current</div>
                   )}
                 </div>
               ))}

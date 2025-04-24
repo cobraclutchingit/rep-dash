@@ -1,9 +1,10 @@
-import { SalesPosition, UserRole } from "@prisma/client";
-import "next-auth";
+import { SalesPosition, UserRole } from '@prisma/client';
 
-declare module "next-auth" {
+declare module 'next-auth' {
   interface User {
     id: string;
+    email: string;
+    name?: string | null;
     role: UserRole;
     position?: SalesPosition;
     isActive: boolean;
@@ -15,18 +16,20 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       image?: string | null;
-      role: string;
-      position?: string;
+      role: UserRole;
+      position?: SalesPosition | null;
       isActive: boolean;
     };
   }
 }
 
-declare module "next-auth/jwt" {
+declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
-    role: string;
-    position?: string;
+    email: string;
+    name?: string | null;
+    role: UserRole;
+    position?: SalesPosition | null;
     isActive: boolean;
   }
 }

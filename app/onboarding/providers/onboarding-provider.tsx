@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { SalesPosition } from "@prisma/client";
+import { SalesPosition } from '@prisma/client';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Define types for our onboarding data
 export interface OnboardingTrack {
@@ -39,7 +39,7 @@ export interface OnboardingProgress {
   id: string;
   userId: string;
   stepId: string;
-  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
   startedAt?: Date | null;
   completedAt?: Date | null;
   notes?: string | null;
@@ -75,7 +75,7 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 export function useOnboarding() {
   const context = useContext(OnboardingContext);
   if (!context) {
-    throw new Error("useOnboarding must be used within an OnboardingProvider");
+    throw new Error('useOnboarding must be used within an OnboardingProvider');
   }
   return context;
 }
@@ -99,42 +99,40 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const fetchUserOnboarding = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch("/api/onboarding");
-      
+      const response = await fetch('/api/onboarding');
+
       if (!response.ok) {
-        throw new Error("Failed to fetch onboarding data");
+        throw new Error('Failed to fetch onboarding data');
       }
-      
+
       const data = await response.json();
       setActiveTrack(data.track);
       setSteps(data.steps);
-      
+
       // Calculate stats
       const totalSteps = data.steps.length;
-      const completedSteps = data.steps.filter((step: OnboardingStep) => 
-        step.progress?.status === "COMPLETED"
+      const completedSteps = data.steps.filter(
+        (step: OnboardingStep) => step.progress?.status === 'COMPLETED'
       ).length;
-      const inProgressSteps = data.steps.filter((step: OnboardingStep) => 
-        step.progress?.status === "IN_PROGRESS"
+      const inProgressSteps = data.steps.filter(
+        (step: OnboardingStep) => step.progress?.status === 'IN_PROGRESS'
       ).length;
       const notStartedSteps = totalSteps - completedSteps - inProgressSteps;
-      
+
       // Calculate percent complete
-      const percentComplete = totalSteps > 0 
-        ? Math.round((completedSteps / totalSteps) * 100) 
-        : 0;
-      
+      const percentComplete = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
       // Calculate estimated time remaining
-      const remainingSteps = data.steps.filter((step: OnboardingStep) => 
-        step.progress?.status !== "COMPLETED"
+      const remainingSteps = data.steps.filter(
+        (step: OnboardingStep) => step.progress?.status !== 'COMPLETED'
       );
       const estimatedTimeRemaining = remainingSteps.reduce(
-        (total: number, step: OnboardingStep) => total + (step.estimatedDuration || 0), 
+        (total: number, step: OnboardingStep) => total + (step.estimatedDuration || 0),
         0
       );
-      
+
       setStats({
         totalSteps,
         completedSteps,
@@ -143,10 +141,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         percentComplete,
         estimatedTimeRemaining,
       });
-      
+
       setLoading(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setLoading(false);
     }
   };
@@ -155,41 +153,41 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const startStep = async (stepId: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/onboarding/steps/${stepId}/progress`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: "IN_PROGRESS" }),
+        body: JSON.stringify({ status: 'IN_PROGRESS' }),
       });
-      
+
       if (!response.ok) {
-        throw new Error("Failed to start step");
+        throw new Error('Failed to start step');
       }
-      
+
       // Refresh onboarding data
       await fetchUserOnboarding();
-      
+
       // If we have an active step, update its progress status
       if (activeStep && activeStep.id === stepId) {
         setActiveStep({
           ...activeStep,
           progress: {
-            ...(activeStep.progress || { 
-              id: "", 
-              userId: "", 
-              stepId, 
-              status: "NOT_STARTED" 
+            ...(activeStep.progress || {
+              id: '',
+              userId: '',
+              stepId,
+              status: 'NOT_STARTED',
             }),
-            status: "IN_PROGRESS",
+            status: 'IN_PROGRESS',
             startedAt: new Date(),
           },
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setLoading(false);
     }
   };
@@ -198,45 +196,45 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const completeStep = async (stepId: string, notes?: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/onboarding/steps/${stepId}/progress`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          status: "COMPLETED",
+        body: JSON.stringify({
+          status: 'COMPLETED',
           notes: notes || null,
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error("Failed to complete step");
+        throw new Error('Failed to complete step');
       }
-      
+
       // Refresh onboarding data
       await fetchUserOnboarding();
-      
+
       // If we have an active step, update its progress status
       if (activeStep && activeStep.id === stepId) {
         setActiveStep({
           ...activeStep,
           progress: {
-            ...(activeStep.progress || { 
-              id: "", 
-              userId: "", 
-              stepId, 
-              status: "NOT_STARTED" 
+            ...(activeStep.progress || {
+              id: '',
+              userId: '',
+              stepId,
+              status: 'NOT_STARTED',
             }),
-            status: "COMPLETED",
+            status: 'COMPLETED',
             completedAt: new Date(),
             notes: notes || null,
           },
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setLoading(false);
     }
   };
@@ -245,19 +243,19 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const resetStep = async (stepId: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/onboarding/steps/${stepId}/progress`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
-      
+
       if (!response.ok) {
-        throw new Error("Failed to reset step");
+        throw new Error('Failed to reset step');
       }
-      
+
       // Refresh onboarding data
       await fetchUserOnboarding();
-      
+
       // If we have an active step, update its progress status
       if (activeStep && activeStep.id === stepId) {
         setActiveStep({
@@ -266,7 +264,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setLoading(false);
     }
   };

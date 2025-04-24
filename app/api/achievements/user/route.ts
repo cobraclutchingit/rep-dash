@@ -1,17 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 // GET /api/achievements/user
 // Get achievements for the current logged-in user
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
         achievement: true,
       },
       orderBy: {
-        awardedAt: "desc",
+        awardedAt: 'desc',
       },
     });
 
@@ -44,10 +45,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(achievements);
   } catch (error) {
-    console.error("Error fetching user achievements:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch achievements" },
-      { status: 500 }
-    );
+    console.error('Error fetching user achievements:', error);
+    return NextResponse.json({ error: 'Failed to fetch achievements' }, { status: 500 });
   }
 }

@@ -8,40 +8,40 @@ This disaster recovery plan provides a structured approach for recovering the Re
 
 ## Recovery Team Contacts
 
-| Role | Name | Contact | Responsibility |
-|------|------|---------|----------------|
-| System Administrator | [Name] | [Email/Phone] | Server infrastructure, Deployment |
+| Role                   | Name   | Contact       | Responsibility                    |
+| ---------------------- | ------ | ------------- | --------------------------------- |
+| System Administrator   | [Name] | [Email/Phone] | Server infrastructure, Deployment |
 | Database Administrator | [Name] | [Email/Phone] | Database recovery, Data integrity |
-| Lead Developer | [Name] | [Email/Phone] | Application code, Configuration |
-| DevOps Engineer | [Name] | [Email/Phone] | CI/CD, Monitoring, Automation |
-| Security Officer | [Name] | [Email/Phone] | Security audits, Access control |
+| Lead Developer         | [Name] | [Email/Phone] | Application code, Configuration   |
+| DevOps Engineer        | [Name] | [Email/Phone] | CI/CD, Monitoring, Automation     |
+| Security Officer       | [Name] | [Email/Phone] | Security audits, Access control   |
 
 ## Recovery Time Objectives (RTO)
 
 | System Component | Recovery Time Objective |
-|------------------|-------------------------|
-| Website frontend | 1 hour |
-| API services | 2 hours |
-| Database | 4 hours |
-| Complete system | 8 hours |
+| ---------------- | ----------------------- |
+| Website frontend | 1 hour                  |
+| API services     | 2 hours                 |
+| Database         | 4 hours                 |
+| Complete system  | 8 hours                 |
 
 ## Recovery Point Objectives (RPO)
 
-| Data Type | Recovery Point Objective |
-|-----------|--------------------------|
-| User data | 24 hours |
-| System configuration | 24 hours |
-| Logs and analytics | 72 hours |
+| Data Type            | Recovery Point Objective |
+| -------------------- | ------------------------ |
+| User data            | 24 hours                 |
+| System configuration | 24 hours                 |
+| Logs and analytics   | 72 hours                 |
 
 ## Required Resources
 
-* Backup server access credentials
-* Cloud provider (AWS/Azure/GCP) access credentials
-* Domain registrar access
-* SSL certificate private keys
-* Database administrator credentials
-* Server SSH keys
-* Environment configuration files (.env)
+- Backup server access credentials
+- Cloud provider (AWS/Azure/GCP) access credentials
+- Domain registrar access
+- SSL certificate private keys
+- Database administrator credentials
+- Server SSH keys
+- Environment configuration files (.env)
 
 ## Backup Location
 
@@ -196,24 +196,28 @@ sudo bash /var/www/rep-dash/monitoring/verify-system.sh
 ## Post-Recovery Tasks
 
 1. **Verify System Functionality**
+
    ```bash
    # Run system validation tests
    npm run test:e2e
    ```
 
 2. **Check Monitoring and Alerts**
+
    ```bash
    # Ensure all monitoring is operational
    systemctl status prometheus alertmanager node_exporter
    ```
 
 3. **Perform Security Audit**
+
    ```bash
    # Run security checks
    sudo bash /var/www/rep-dash/monitoring/security-audit.sh
    ```
 
 4. **Update Documentation**
+
    - Record details of the recovery process
    - Update this document with any lessons learned
 
@@ -225,15 +229,15 @@ sudo bash /var/www/rep-dash/monitoring/verify-system.sh
 
 This disaster recovery plan should be tested on the following schedule:
 
-| Test Type | Frequency | Last Tested | Next Test Due |
-|-----------|-----------|-------------|---------------|
-| Database restore | Monthly | [Date] | [Date] |
-| Application restore | Quarterly | [Date] | [Date] |
-| Full system recovery | Bi-annually | [Date] | [Date] |
+| Test Type            | Frequency   | Last Tested | Next Test Due |
+| -------------------- | ----------- | ----------- | ------------- |
+| Database restore     | Monthly     | [Date]      | [Date]        |
+| Application restore  | Quarterly   | [Date]      | [Date]        |
+| Full system recovery | Bi-annually | [Date]      | [Date]        |
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | [Date] | [Name] | Initial version |
-| 1.1 | [Date] | [Name] | Updated backup encryption procedures |
+| Version | Date   | Author | Changes                              |
+| ------- | ------ | ------ | ------------------------------------ |
+| 1.0     | [Date] | [Name] | Initial version                      |
+| 1.1     | [Date] | [Name] | Updated backup encryption procedures |

@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect, Fragment } from "react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { Dialog, Transition } from "@headlessui/react";
-import { SidebarItemType } from "./sidebar";
-import { cn } from "@/lib/utils";
+import { Dialog, Transition } from '@headlessui/react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect, Fragment } from 'react';
+
+import { cn } from '@/lib/utils';
+
+import { SidebarItemType } from './sidebar';
 
 interface MobileNavProps {
   items: SidebarItemType[];
@@ -18,9 +20,7 @@ export function MobileNav({ items, title, userRole, footer }: MobileNavProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
-  const filteredItems = items.filter(
-    (item) => !item.requiresAdmin || userRole === "admin"
-  );
+  const filteredItems = items.filter((item) => !item.requiresAdmin || userRole === 'admin');
 
   useEffect(() => {
     setIsOpen(false);
@@ -28,13 +28,13 @@ export function MobileNav({ items, title, userRole, footer }: MobileNavProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between p-4 border-b md:hidden">
+      <div className="flex items-center justify-between border-b p-4 md:hidden">
         <Link href="/dashboard" className="text-xl font-bold">
           {title}
         </Link>
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 rounded-md hover:bg-secondary"
+          className="hover:bg-secondary rounded-md p-2"
           aria-label="Open mobile menu"
         >
           <svg
@@ -78,15 +78,13 @@ export function MobileNav({ items, title, userRole, footer }: MobileNavProps) {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-3/4 max-w-sm bg-card shadow-lg transition-transform">
+              <Dialog.Panel className="bg-card fixed inset-y-0 left-0 z-50 w-3/4 max-w-sm shadow-lg transition-transform">
                 <div className="flex h-screen flex-col">
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <Dialog.Title className="text-xl font-bold">
-                      {title}
-                    </Dialog.Title>
+                  <div className="flex items-center justify-between border-b p-4">
+                    <Dialog.Title className="text-xl font-bold">{title}</Dialog.Title>
                     <button
                       onClick={() => setIsOpen(false)}
-                      className="p-2 rounded-md hover:bg-secondary"
+                      className="hover:bg-secondary rounded-md p-2"
                       aria-label="Close mobile menu"
                     >
                       <svg
@@ -105,17 +103,17 @@ export function MobileNav({ items, title, userRole, footer }: MobileNavProps) {
                       </svg>
                     </button>
                   </div>
-                  <div className="p-4 flex-grow overflow-y-auto">
+                  <div className="flex-grow overflow-y-auto p-4">
                     <nav className="space-y-2">
                       {filteredItems.map((item) => (
                         <Link
                           key={item.path}
                           href={item.path}
                           className={cn(
-                            "flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            'flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                             pathname === item.path
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
                           )}
                         >
                           <span className="flex-shrink-0">{item.icon}</span>
@@ -124,7 +122,7 @@ export function MobileNav({ items, title, userRole, footer }: MobileNavProps) {
                       ))}
                     </nav>
                   </div>
-                  {footer && <div className="p-4 border-t">{footer}</div>}
+                  {footer && <div className="border-t p-4">{footer}</div>}
                 </div>
               </Dialog.Panel>
             </Transition.Child>

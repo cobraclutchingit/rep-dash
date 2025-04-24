@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageOnboarding } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageOnboarding } from '@/lib/utils/permissions';
 
 // GET /api/onboarding/resources
 // Get all resources
@@ -12,7 +13,7 @@ export async function GET() {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -27,17 +28,14 @@ export async function GET() {
 
     const resources = await prisma.resource.findMany({
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return NextResponse.json(resources);
   } catch (error) {
-    console.error("Error fetching resources:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch resources" },
-      { status: 500 }
-    );
+    console.error('Error fetching resources:', error);
+    return NextResponse.json({ error: 'Failed to fetch resources' }, { status: 500 });
   }
 }
 
@@ -49,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -66,20 +64,14 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!title || !type || !url) {
-      return NextResponse.json(
-        { error: "Title, type, and URL are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Title, type, and URL are required' }, { status: 400 });
     }
 
     // Validate URL format
     try {
       new URL(url);
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid URL format" },
-        { status: 400 }
-      );
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
     }
 
     const resource = await prisma.resource.create({
@@ -94,10 +86,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(resource, { status: 201 });
   } catch (error) {
-    console.error("Error creating resource:", error);
-    return NextResponse.json(
-      { error: "Failed to create resource" },
-      { status: 500 }
-    );
+    console.error('Error creating resource:', error);
+    return NextResponse.json({ error: 'Failed to create resource' }, { status: 500 });
   }
 }

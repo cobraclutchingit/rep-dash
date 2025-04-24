@@ -1,60 +1,49 @@
-"use client";
+'use client';
 
-import React from "react";
-import ContestCard from "./contest-card";
-import { useCommunication } from "../providers/communication-provider";
-import { ContestType, ContestStatus } from "@prisma/client";
-import Link from "next/link";
+import { ContestType, ContestStatus } from '@prisma/client';
+import Link from 'next/link';
+import React from 'react';
+
+import ContestCard from './contest-card';
+import { useCommunication } from '../providers/communication-provider';
 
 interface ContestsSectionProps {
   showViewAll?: boolean;
   limit?: number;
 }
 
-export default function ContestsSection({ 
-  showViewAll = true, 
-  limit 
-}: ContestsSectionProps) {
-  const { 
-    getFilteredContests, 
-    filters, 
-    setFilters, 
-    loading 
-  } = useCommunication();
+export default function ContestsSection({ showViewAll = true, limit }: ContestsSectionProps) {
+  const { getFilteredContests, filters, setFilters, loading } = useCommunication();
 
   // Get filtered contests
   const contests = getFilteredContests();
-  
+
   // Limit the number of contests if specified
   const displayedContests = limit ? contests.slice(0, limit) : contests;
 
   // Update type filter
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const type = e.target.value === "all" 
-      ? null 
-      : e.target.value as ContestType;
-    
+    const type = e.target.value === 'all' ? null : (e.target.value as ContestType);
+
     setFilters({
       ...filters,
       contests: {
         ...filters.contests,
-        type
-      }
+        type,
+      },
     });
   };
 
   // Update status filter
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const status = e.target.value === "all" 
-      ? null 
-      : e.target.value as ContestStatus;
-    
+    const status = e.target.value === 'all' ? null : (e.target.value as ContestStatus);
+
     setFilters({
       ...filters,
       contests: {
         ...filters.contests,
-        status
-      }
+        status,
+      },
     });
   };
 
@@ -64,52 +53,53 @@ export default function ContestsSection({
       ...filters,
       contests: {
         ...filters.contests,
-        searchTerm: e.target.value
-      }
+        searchTerm: e.target.value,
+      },
     });
   };
 
   // Format enum values for display
   const formatEnumValue = (value: string) => {
-    return value.split('_').map(word => 
-      word.charAt(0) + word.slice(1).toLowerCase()
-    ).join(' ');
+    return value
+      .split('_')
+      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
   };
 
   return (
     <div className="mb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+      <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <h2 className="text-xl font-semibold">Contests & Challenges</h2>
-        
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <input
             type="text"
             placeholder="Search..."
             value={filters.contests.searchTerm}
             onChange={handleSearchChange}
-            className="rounded-md border-input bg-background px-3 py-1 text-sm w-full sm:w-auto"
+            className="border-input bg-background w-full rounded-md px-3 py-1 text-sm sm:w-auto"
           />
-          
+
           <select
-            value={filters.contests.type || "all"}
+            value={filters.contests.type || 'all'}
             onChange={handleTypeChange}
-            className="rounded-md border-input bg-background px-3 py-1 text-sm"
+            className="border-input bg-background rounded-md px-3 py-1 text-sm"
           >
             <option value="all">All Types</option>
-            {Object.values(ContestType).map(type => (
+            {Object.values(ContestType).map((type) => (
               <option key={type} value={type}>
                 {formatEnumValue(type)}
               </option>
             ))}
           </select>
-          
+
           <select
-            value={filters.contests.status || "all"}
+            value={filters.contests.status || 'all'}
             onChange={handleStatusChange}
-            className="rounded-md border-input bg-background px-3 py-1 text-sm"
+            className="border-input bg-background rounded-md px-3 py-1 text-sm"
           >
             <option value="all">All Statuses</option>
-            {Object.values(ContestStatus).map(status => (
+            {Object.values(ContestStatus).map((status) => (
               <option key={status} value={status}>
                 {formatEnumValue(status)}
               </option>
@@ -117,49 +107,51 @@ export default function ContestsSection({
           </select>
         </div>
       </div>
-      
+
       {loading ? (
         <div className="flex justify-center p-12">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
         </div>
       ) : displayedContests.length === 0 ? (
-        <div className="bg-card text-card-foreground rounded-lg p-12 text-center border">
-          <div className="text-4xl mb-3">🏆</div>
-          <h3 className="text-lg font-medium mb-2">No Contests</h3>
+        <div className="bg-card text-card-foreground rounded-lg border p-12 text-center">
+          <div className="mb-3 text-4xl">🏆</div>
+          <h3 className="mb-2 text-lg font-medium">No Contests</h3>
           <p className="text-muted-foreground mb-4">
             {filters.contests.searchTerm || filters.contests.type || filters.contests.status
-              ? "No contests match your current filters"
-              : "There are no contests at this time"}
+              ? 'No contests match your current filters'
+              : 'There are no contests at this time'}
           </p>
           {(filters.contests.searchTerm || filters.contests.type || filters.contests.status) && (
             <button
-              onClick={() => setFilters({
-                ...filters,
-                contests: {
-                  type: null,
-                  status: null,
-                  searchTerm: ""
-                }
-              })}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              onClick={() =>
+                setFilters({
+                  ...filters,
+                  contests: {
+                    type: null,
+                    status: null,
+                    searchTerm: '',
+                  },
+                })
+              }
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2"
             >
               Clear Filters
             </button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedContests.map(contest => (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {displayedContests.map((contest) => (
             <ContestCard key={contest.id} contest={contest} />
           ))}
         </div>
       )}
-      
+
       {showViewAll && limit && contests.length > limit && (
-        <div className="text-center mt-6">
-          <Link 
-            href="/communication/contests" 
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 inline-block"
+        <div className="mt-6 text-center">
+          <Link
+            href="/communication/contests"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-block rounded-md px-4 py-2"
           >
             View All Contests
           </Link>

@@ -1,21 +1,24 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { AppProvider } from "@/components/providers/app-provider";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+import './globals.css';
+import { AppProvider } from '@/components/providers/app-provider';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const interMono = Inter({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  style: ['normal'],
+  variable: '--font-geist-mono',
 });
 
 export const metadata: Metadata = {
-  title: "Sales Rep Dashboard",
-  description: "A complete sales rep management dashboard",
+  title: 'Sales Rep Dashboard',
+  description: 'A complete sales rep management dashboard',
 };
 
 export default function RootLayout({
@@ -25,12 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
-      >
-        <AppProvider>
-          {children}
-        </AppProvider>
+      <body className={`${inter.variable} ${interMono.variable} font-sans antialiased`}>
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );

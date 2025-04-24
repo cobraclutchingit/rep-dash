@@ -1,45 +1,46 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Starting database seed...')
+  console.error('Starting database seed...');
 
   // Clean existing data if needed
-  await prisma.userAchievement.deleteMany()
-  await prisma.achievement.deleteMany()
-  await prisma.leaderboardEntry.deleteMany()
-  await prisma.leaderboard.deleteMany()
-  await prisma.contestParticipant.deleteMany()
-  await prisma.contest.deleteMany()
-  await prisma.importantLink.deleteMany()
-  await prisma.announcement.deleteMany()
-  await prisma.eventAttendee.deleteMany()
-  await prisma.calendarEvent.deleteMany()
-  await prisma.onboardingProgress.deleteMany()
-  await prisma.onboardingStep.deleteMany()
-  await prisma.onboardingTrack.deleteMany()
-  await prisma.quizAnswer.deleteMany()
-  await prisma.quizOption.deleteMany()
-  await prisma.quizQuestion.deleteMany()
-  await prisma.trainingProgress.deleteMany()
-  await prisma.trainingSection.deleteMany()
-  await prisma.trainingModulePrerequisite.deleteMany()
-  await prisma.trainingModule.deleteMany()
-  await prisma.resource.deleteMany()
-  await prisma.userNote.deleteMany()
-  await prisma.session.deleteMany()
-  await prisma.account.deleteMany()
-  await prisma.user.deleteMany()
+  await prisma.userAchievement.deleteMany();
+  await prisma.achievement.deleteMany();
+  await prisma.leaderboardEntry.deleteMany();
+  await prisma.leaderboard.deleteMany();
+  await prisma.contestParticipant.deleteMany();
+  await prisma.contest.deleteMany();
+  await prisma.importantLink.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.eventAttendee.deleteMany();
+  await prisma.calendarEvent.deleteMany();
+  await prisma.onboardingProgress.deleteMany();
+  await prisma.onboardingStep.deleteMany();
+  await prisma.onboardingTrack.deleteMany();
+  await prisma.quizAnswer.deleteMany();
+  await prisma.quizOption.deleteMany();
+  await prisma.quizQuestion.deleteMany();
+  await prisma.trainingProgress.deleteMany();
+  await prisma.trainingSection.deleteMany();
+  await prisma.trainingModulePrerequisite.deleteMany();
+  await prisma.trainingModule.deleteMany();
+  await prisma.resource.deleteMany();
+  await prisma.userNote.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.user.deleteMany();
 
-  console.log('Database cleared. Creating seed data...')
+  console.error('Database cleared. Creating seed data...');
 
   // Create users
-  const adminPassword = await bcrypt.hash('admin123', 10)
-  const userPassword = await bcrypt.hash('password123', 10)
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const userPassword = await bcrypt.hash('password123', 10);
 
-  const admin = await prisma.user.create({
+  const _admin = await prisma.user.create({
     data: {
       email: 'admin@example.com',
       password: adminPassword,
@@ -48,7 +49,7 @@ async function main() {
       role: 'ADMIN',
       emailVerified: new Date(),
     },
-  })
+  });
 
   const manager = await prisma.user.create({
     data: {
@@ -63,7 +64,7 @@ async function main() {
       startDate: new Date('2022-01-15'),
       territory: 'Northwest Region',
     },
-  })
+  });
 
   const consultant1 = await prisma.user.create({
     data: {
@@ -78,7 +79,7 @@ async function main() {
       startDate: new Date('2023-03-10'),
       territory: 'Central District',
     },
-  })
+  });
 
   const consultant2 = await prisma.user.create({
     data: {
@@ -93,7 +94,7 @@ async function main() {
       startDate: new Date('2022-07-22'),
       territory: 'Eastern Region',
     },
-  })
+  });
 
   const juniorConsultant = await prisma.user.create({
     data: {
@@ -108,12 +109,12 @@ async function main() {
       startDate: new Date('2023-11-05'),
       territory: 'Southern District',
     },
-  })
+  });
 
-  console.log('Created users')
+  console.error('Created users');
 
   // Create resources
-  const resources = await Promise.all([
+  const _resources = await Promise.all([
     prisma.resource.create({
       data: {
         title: 'Sales Process Overview',
@@ -150,9 +151,9 @@ async function main() {
         isExternal: true,
       },
     }),
-  ])
+  ]);
 
-  console.log('Created resources')
+  console.error('Created resources');
 
   // Create training modules and sections
   const onboardingModule = await prisma.trainingModule.create({
@@ -168,7 +169,7 @@ async function main() {
       estimatedDuration: 120,
       publishedAt: new Date('2023-01-01'),
     },
-  })
+  });
 
   const appointmentModule = await prisma.trainingModule.create({
     data: {
@@ -183,9 +184,9 @@ async function main() {
       estimatedDuration: 90,
       publishedAt: new Date('2023-01-15'),
     },
-  })
+  });
 
-  const productModule = await prisma.trainingModule.create({
+  const _productModule = await prisma.trainingModule.create({
     data: {
       title: 'Product Knowledge',
       description: 'Comprehensive information about our energy solutions',
@@ -198,7 +199,7 @@ async function main() {
       estimatedDuration: 180,
       publishedAt: new Date('2023-02-01'),
     },
-  })
+  });
 
   // Create sections for the onboarding module
   const sections = await Promise.all([
@@ -206,7 +207,8 @@ async function main() {
       data: {
         moduleId: onboardingModule.id,
         title: 'Welcome to the Company',
-        content: '<h1>Welcome to Our Team!</h1><p>We\'re excited to have you join us. This section will cover our company history, values, and structure.</p>',
+        content:
+          "<h1>Welcome to Our Team!</h1><p>We're excited to have you join us. This section will cover our company history, values, and structure.</p>",
         contentFormat: 'HTML',
         order: 1,
       },
@@ -215,7 +217,8 @@ async function main() {
       data: {
         moduleId: onboardingModule.id,
         title: 'Getting Started',
-        content: '# Getting Started\n\nIn this section, you\'ll learn about our tools, systems, and procedures for your first week.',
+        content:
+          "# Getting Started\n\nIn this section, you'll learn about our tools, systems, and procedures for your first week.",
         contentFormat: 'MARKDOWN',
         order: 2,
       },
@@ -224,7 +227,8 @@ async function main() {
       data: {
         moduleId: appointmentModule.id,
         title: 'Introduction to Appointment Setting',
-        content: '<h1>The Art of Setting Appointments</h1><p>Learn the fundamentals of effective appointment setting and why it\'s crucial to your success.</p>',
+        content:
+          "<h1>The Art of Setting Appointments</h1><p>Learn the fundamentals of effective appointment setting and why it's crucial to your success.</p>",
         contentFormat: 'HTML',
         order: 1,
       },
@@ -233,12 +237,13 @@ async function main() {
       data: {
         moduleId: appointmentModule.id,
         title: 'Cold Calling Techniques',
-        content: '# Cold Calling Techniques\n\nEffective strategies for engaging prospects over the phone and setting appointments.',
+        content:
+          '# Cold Calling Techniques\n\nEffective strategies for engaging prospects over the phone and setting appointments.',
         contentFormat: 'MARKDOWN',
         order: 2,
       },
     }),
-  ])
+  ]);
 
   // Add quiz questions
   const question1 = await prisma.quizQuestion.create({
@@ -248,7 +253,7 @@ async function main() {
       questionType: 'MULTIPLE_CHOICE',
       points: 2,
     },
-  })
+  });
 
   await prisma.quizOption.createMany({
     data: [
@@ -273,7 +278,7 @@ async function main() {
         isCorrect: false,
       },
     ],
-  })
+  });
 
   const question2 = await prisma.quizQuestion.create({
     data: {
@@ -282,7 +287,7 @@ async function main() {
       questionType: 'MULTIPLE_CHOICE',
       points: 3,
     },
-  })
+  });
 
   await prisma.quizOption.createMany({
     data: [
@@ -307,9 +312,9 @@ async function main() {
         isCorrect: false,
       },
     ],
-  })
+  });
 
-  console.log('Created training modules, sections, and quizzes')
+  console.error('Created training modules, sections, and quizzes');
 
   // Create onboarding tracks and steps
   const juniorTrack = await prisma.onboardingTrack.create({
@@ -319,16 +324,16 @@ async function main() {
       forPositions: ['JUNIOR_EC'],
       isActive: true,
     },
-  })
+  });
 
-  const consultantTrack = await prisma.onboardingTrack.create({
+  const _consultantTrack = await prisma.onboardingTrack.create({
     data: {
       name: 'Energy Consultant Onboarding',
       description: 'Onboarding process for Energy Consultants',
       forPositions: ['ENERGY_CONSULTANT', 'ENERGY_SPECIALIST'],
       isActive: true,
     },
-  })
+  });
 
   // Create steps for the junior track
   const juniorSteps = await Promise.all([
@@ -337,7 +342,8 @@ async function main() {
         trackId: juniorTrack.id,
         title: 'Complete New Hire Paperwork',
         description: 'Submit all required employment documents',
-        instructions: 'Please complete and sign all forms in the new hire packet and submit them to HR.',
+        instructions:
+          'Please complete and sign all forms in the new hire packet and submit them to HR.',
         order: 1,
         estimatedDuration: 60,
       },
@@ -362,7 +368,7 @@ async function main() {
         estimatedDuration: 120,
       },
     }),
-  ])
+  ]);
 
   // Create onboarding progress for the new junior
   await prisma.onboardingProgress.createMany({
@@ -388,9 +394,9 @@ async function main() {
         startedAt: new Date('2023-11-08'),
       },
     ],
-  })
+  });
 
-  console.log('Created onboarding tracks and steps')
+  console.error('Created onboarding tracks and steps');
 
   // Create training progress
   await prisma.trainingProgress.createMany({
@@ -424,9 +430,9 @@ async function main() {
         completedAt: new Date('2022-08-01'),
       },
     ],
-  })
+  });
 
-  console.log('Created training progress records')
+  console.error('Created training progress records');
 
   // Create calendar events
   const teamMeeting = await prisma.calendarEvent.create({
@@ -443,9 +449,9 @@ async function main() {
       visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST', 'MANAGER'],
       createdById: manager.id,
     },
-  })
+  });
 
-  const blitzEvent = await prisma.calendarEvent.create({
+  const _blitzEvent = await prisma.calendarEvent.create({
     data: {
       title: 'Holiday Sales Blitz',
       description: 'Special 10-day sales blitz for the holiday season',
@@ -458,7 +464,7 @@ async function main() {
       visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST', 'MANAGER'],
       createdById: manager.id,
     },
-  })
+  });
 
   const trainingEvent = await prisma.calendarEvent.create({
     data: {
@@ -472,7 +478,7 @@ async function main() {
       visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST'],
       createdById: manager.id,
     },
-  })
+  });
 
   // Add attendees to events
   await prisma.eventAttendee.createMany({
@@ -513,16 +519,17 @@ async function main() {
         status: 'DECLINED',
       },
     ],
-  })
+  });
 
-  console.log('Created calendar events')
+  console.error('Created calendar events');
 
   // Create announcements
   await prisma.announcement.createMany({
     data: [
       {
         title: 'New Product Launch',
-        content: '<h2>Exciting New Product Launch!</h2><p>We\'re thrilled to announce the launch of our new energy efficiency package. Training will be provided next week.</p>',
+        content:
+          "<h2>Exciting New Product Launch!</h2><p>We're thrilled to announce the launch of our new energy efficiency package. Training will be provided next week.</p>",
         priority: 'HIGH',
         visibleToRoles: ['USER', 'ADMIN'],
         visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST', 'MANAGER'],
@@ -532,7 +539,8 @@ async function main() {
       },
       {
         title: 'Office Closure Notice',
-        content: 'Please note that the office will be closed on December 25th and 26th for the holidays.',
+        content:
+          'Please note that the office will be closed on December 25th and 26th for the holidays.',
         priority: 'MEDIUM',
         visibleToRoles: ['USER', 'ADMIN'],
         visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST', 'MANAGER'],
@@ -541,7 +549,8 @@ async function main() {
       },
       {
         title: 'CRM Update This Weekend',
-        content: 'Our CRM system will be updated this weekend. Expect 2-3 hours of downtime on Saturday night.',
+        content:
+          'Our CRM system will be updated this weekend. Expect 2-3 hours of downtime on Saturday night.',
         priority: 'LOW',
         visibleToRoles: ['USER', 'ADMIN'],
         visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST', 'MANAGER'],
@@ -549,7 +558,7 @@ async function main() {
         expiryDate: new Date('2023-11-26'),
       },
     ],
-  })
+  });
 
   // Create important links
   await prisma.importantLink.createMany({
@@ -585,15 +594,16 @@ async function main() {
         visibleToPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT', 'ENERGY_SPECIALIST', 'MANAGER'],
       },
     ],
-  })
+  });
 
-  console.log('Created announcements and important links')
+  console.error('Created announcements and important links');
 
   // Create contests
   const salesContest = await prisma.contest.create({
     data: {
       title: 'Q4 Sales Challenge',
-      description: 'Who can close the most sales in Q4? The top performers will win amazing prizes!',
+      description:
+        'Who can close the most sales in Q4? The top performers will win amazing prizes!',
       contestType: 'SALES',
       status: 'ACTIVE',
       startDate: new Date('2023-10-01'),
@@ -605,9 +615,10 @@ async function main() {
         secondPlace: '$500 gift card',
         thirdPlace: '$250 gift card',
       }),
-      rules: '1. All sales must be final with no cancellations\n2. Only new customer sales count\n3. Winners announced by January 15th',
+      rules:
+        '1. All sales must be final with no cancellations\n2. Only new customer sales count\n3. Winners announced by January 15th',
     },
-  })
+  });
 
   const appointmentContest = await prisma.contest.create({
     data: {
@@ -625,7 +636,7 @@ async function main() {
         thirdPlace: '$75 gift card',
       }),
     },
-  })
+  });
 
   // Add contest participants
   await prisma.contestParticipant.createMany({
@@ -658,9 +669,9 @@ async function main() {
         score: 0, // Contest hasn't started yet
       },
     ],
-  })
+  });
 
-  console.log('Created contests')
+  console.error('Created contests');
 
   // Create leaderboards
   const closersLeaderboard = await prisma.leaderboard.create({
@@ -672,7 +683,7 @@ async function main() {
       forPositions: ['ENERGY_CONSULTANT', 'ENERGY_SPECIALIST'],
       isActive: true,
     },
-  })
+  });
 
   const appointmentSettersLeaderboard = await prisma.leaderboard.create({
     data: {
@@ -683,7 +694,7 @@ async function main() {
       forPositions: ['JUNIOR_EC', 'ENERGY_CONSULTANT'],
       isActive: true,
     },
-  })
+  });
 
   // Add leaderboard entries
   await prisma.leaderboardEntry.createMany({
@@ -741,9 +752,9 @@ async function main() {
         }),
       },
     ],
-  })
+  });
 
-  console.log('Created leaderboards')
+  console.error('Created leaderboards');
 
   // Create achievements
   const achievements = await Promise.all([
@@ -779,7 +790,7 @@ async function main() {
         points: 75,
       },
     }),
-  ])
+  ]);
 
   // Award achievements to users
   await prisma.userAchievement.createMany({
@@ -805,19 +816,19 @@ async function main() {
         awardedAt: new Date('2023-11-28'),
       },
     ],
-  })
+  });
 
-  console.log('Created achievements')
+  console.error('Created achievements');
 
-  console.log('Database seeding completed successfully!')
+  console.error('Database seeding completed successfully!');
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

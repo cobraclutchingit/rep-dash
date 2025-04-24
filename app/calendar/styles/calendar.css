@@ -170,7 +170,7 @@
 }
 
 .blitz-event::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -225,30 +225,30 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .rbc-toolbar .rbc-toolbar-label {
     margin: 10px 0;
   }
-  
+
   .rbc-btn-group {
     margin-bottom: 10px;
   }
-  
+
   .rbc-header {
     padding: 8px 0;
     font-size: 0.85rem;
   }
-  
+
   .rbc-date-cell {
     padding: 2px 4px;
     font-size: 0.75rem;
   }
-  
+
   .rbc-event {
     padding: 1px 3px;
     font-size: 0.75rem;
   }
-  
+
   .rbc-event-content {
     font-size: 0.75rem;
   }

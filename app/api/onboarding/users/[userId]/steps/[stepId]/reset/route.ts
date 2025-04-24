@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageOnboarding } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageOnboarding } from '@/lib/utils/permissions';
 
 interface RouteParams {
   params: {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -39,10 +40,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Check if step exists
@@ -51,10 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!step) {
-      return NextResponse.json(
-        { error: "Onboarding step not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Onboarding step not found' }, { status: 404 });
     }
 
     // Check if progress record exists
@@ -68,10 +63,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingProgress) {
-      return NextResponse.json(
-        { error: "No progress record found to reset" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'No progress record found to reset' }, { status: 404 });
     }
 
     // Delete the progress record
@@ -89,10 +81,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error resetting user step progress:", error);
-    return NextResponse.json(
-      { error: "Failed to reset user step progress" },
-      { status: 500 }
-    );
+    console.error('Error resetting user step progress:', error);
+    return NextResponse.json({ error: 'Failed to reset user step progress' }, { status: 500 });
   }
 }

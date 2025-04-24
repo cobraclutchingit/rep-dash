@@ -1,25 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageLeaderboards } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 
-interface RouteParams {
-  params: {
-    entryId: string;
-  };
-}
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageLeaderboards } from '@/lib/utils/permissions';
 
 // GET /api/leaderboard/entries/[entryId]
 // Get a specific leaderboard entry by ID
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ entryId: string }> }) {
   try {
-    const { entryId } = params;
+    const { params } = context;
+    const { entryId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -41,10 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!entry) {
-      return NextResponse.json(
-        { error: "Leaderboard entry not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Leaderboard entry not found' }, { status: 404 });
     }
 
     // Check if user has access to this entry
@@ -54,15 +47,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (!isAdmin && !isOwner) {
       // Regular users can only see entries from active leaderboards
       if (!entry.leaderboard.isActive) {
-        return NextResponse.json(
-          { error: "This leaderboard is not active" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: 'This leaderboard is not active' }, { status: 403 });
       }
 
       // Check position restrictions
       if (entry.leaderboard.forPositions.length > 0) {
-        if (!session.user.position || !entry.leaderboard.forPositions.includes(session.user.position)) {
+        if (
+          !session.user.position ||
+          !entry.leaderboard.forPositions.includes(session.user.position)
+        ) {
           return NextResponse.json(
             { error: "You don't have permission to access this entry" },
             { status: 403 }
@@ -73,24 +66,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(entry);
   } catch (error) {
-    console.error("Error fetching leaderboard entry:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch leaderboard entry" },
-      { status: 500 }
-    );
+    console.error('Error fetching leaderboard entry:', error);
+    return NextResponse.json({ error: 'Failed to fetch leaderboard entry' }, { status: 500 });
   }
 }
 
 // PUT /api/leaderboard/entries/[entryId]
 // Update an existing leaderboard entry
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ entryId: string }> }) {
   try {
-    const { entryId } = params;
+    const { params } = context;
+    const { entryId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -109,18 +100,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingEntry) {
-      return NextResponse.json(
-        { error: "Leaderboard entry not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Leaderboard entry not found' }, { status: 404 });
     }
 
-    const {
-      score,
-      periodStart,
-      periodEnd,
-      metrics,
-    } = await request.json();
+    const { score, periodStart, periodEnd, metrics } = await request.json();
 
     // Update the entry
     const updatedEntry = await prisma.leaderboardEntry.update({
@@ -135,31 +118,32 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Update ranks for all entries in this period
     await updateRanksForPeriod(
-      existingEntry.leaderboardId, 
-      updatedEntry.periodStart, 
+      existingEntry.leaderboardId,
+      updatedEntry.periodStart,
       updatedEntry.periodEnd
     );
 
     return NextResponse.json(updatedEntry);
   } catch (error) {
-    console.error("Error updating leaderboard entry:", error);
-    return NextResponse.json(
-      { error: "Failed to update leaderboard entry" },
-      { status: 500 }
-    );
+    console.error('Error updating leaderboard entry:', error);
+    return NextResponse.json({ error: 'Failed to update leaderboard entry' }, { status: 500 });
   }
 }
 
 // DELETE /api/leaderboard/entries/[entryId]
 // Delete a leaderboard entry
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ entryId: string }> }
+) {
   try {
-    const { entryId } = params;
+    const { params } = context;
+    const { entryId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -178,10 +162,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!existingEntry) {
-      return NextResponse.json(
-        { error: "Leaderboard entry not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Leaderboard entry not found' }, { status: 404 });
     }
 
     const { leaderboardId, periodStart, periodEnd } = existingEntry;
@@ -195,15 +176,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     await updateRanksForPeriod(leaderboardId, periodStart, periodEnd);
 
     return NextResponse.json(
-      { message: "Leaderboard entry deleted successfully" },
+      { message: 'Leaderboard entry deleted successfully' },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error deleting leaderboard entry:", error);
-    return NextResponse.json(
-      { error: "Failed to delete leaderboard entry" },
-      { status: 500 }
-    );
+    console.error('Error deleting leaderboard entry:', error);
+    return NextResponse.json({ error: 'Failed to delete leaderboard entry' }, { status: 500 });
   }
 }
 
@@ -218,7 +196,7 @@ async function updateRanksForPeriod(leaderboardId: string, startDate: Date, endD
         periodEnd: endDate,
       },
       orderBy: {
-        score: "desc",
+        score: 'desc',
       },
     });
 
@@ -233,6 +211,6 @@ async function updateRanksForPeriod(leaderboardId: string, startDate: Date, endD
       });
     }
   } catch (error) {
-    console.error("Error updating ranks:", error);
+    console.error('Error updating ranks:', error);
   }
 }

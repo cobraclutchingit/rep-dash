@@ -1,101 +1,101 @@
 groups:
-- name: app_alerts
-  rules:
-  # API high latency
-  - alert: ApiHighLatency
-    expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route=~"/api/.*"}[5m])) by (le, route)) > 1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "API high latency (route {{ $labels.route }})"
-      description: "95th percentile API latency is > 1s for route {{ $labels.route }}\n  VALUE = {{ $value }}s"
+  - name: app_alerts
+    rules:
+      # API high latency
+      - alert: ApiHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route=~"/api/.*"}[5m])) by (le, route)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API high latency (route {{ $labels.route }})'
+          description: "95th percentile API latency is > 1s for route {{ $labels.route }}\n  VALUE = {{ $value }}s"
 
-  # API high error rate
-  - alert: ApiHighErrorRate
-    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (route) / sum(rate(http_requests_total[5m])) by (route) > 0.05
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "API high error rate (route {{ $labels.route }})"
-      description: "Error rate is > 5% for route {{ $labels.route }}\n  VALUE = {{ $value * 100 }}%"
+      # API high error rate
+      - alert: ApiHighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (route) / sum(rate(http_requests_total[5m])) by (route) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API high error rate (route {{ $labels.route }})'
+          description: "Error rate is > 5% for route {{ $labels.route }}\n  VALUE = {{ $value * 100 }}%"
 
-  # API health check failing
-  - alert: ApiHealthCheckFailing
-    expr: probe_success{instance="https://rep-dashboard.example.com/api/health"} == 0
-    for: 3m
-    labels:
-      severity: critical
-    annotations:
-      summary: "API health check failing"
-      description: "API health check has been failing for more than 3 minutes."
+      # API health check failing
+      - alert: ApiHealthCheckFailing
+        expr: probe_success{instance="https://rep-dashboard.example.com/api/health"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'API health check failing'
+          description: 'API health check has been failing for more than 3 minutes.'
 
-  # NodeJS memory usage high
-  - alert: NodeJSMemoryUsageHigh
-    expr: nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes > 0.8
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Node.js memory usage high (instance {{ $labels.instance }})"
-      description: "Node.js memory usage is above 80%\n  VALUE = {{ $value * 100 }}%"
+      # NodeJS memory usage high
+      - alert: NodeJSMemoryUsageHigh
+        expr: nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Node.js memory usage high (instance {{ $labels.instance }})'
+          description: "Node.js memory usage is above 80%\n  VALUE = {{ $value * 100 }}%"
 
-  # Too many Node.js handles
-  - alert: NodeJSTooManyOpenHandles
-    expr: nodejs_handles_open > 1000
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Too many Node.js open handles (instance {{ $labels.instance }})"
-      description: "Node.js has too many open handles\n  VALUE = {{ $value }}"
+      # Too many Node.js handles
+      - alert: NodeJSTooManyOpenHandles
+        expr: nodejs_handles_open > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Too many Node.js open handles (instance {{ $labels.instance }})'
+          description: "Node.js has too many open handles\n  VALUE = {{ $value }}"
 
-  # HTTP 4xx errors high
-  - alert: HTTP4xxErrorsHigh
-    expr: sum(rate(http_requests_total{status=~"4.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.1
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High rate of HTTP 4xx errors"
-      description: "More than 10% of requests are resulting in 4xx errors\n  VALUE = {{ $value * 100 }}%"
+      # HTTP 4xx errors high
+      - alert: HTTP4xxErrorsHigh
+        expr: sum(rate(http_requests_total{status=~"4.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High rate of HTTP 4xx errors'
+          description: "More than 10% of requests are resulting in 4xx errors\n  VALUE = {{ $value * 100 }}%"
 
-  # HTTP 5xx errors high
-  - alert: HTTP5xxErrorsHigh
-    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "High rate of HTTP 5xx errors"
-      description: "More than 5% of requests are resulting in 5xx errors\n  VALUE = {{ $value * 100 }}%"
+      # HTTP 5xx errors high
+      - alert: HTTP5xxErrorsHigh
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'High rate of HTTP 5xx errors'
+          description: "More than 5% of requests are resulting in 5xx errors\n  VALUE = {{ $value * 100 }}%"
 
-  # Application restart detected
-  - alert: ApplicationRestart
-    expr: changes(process_start_time_seconds[5m]) > 0
-    labels:
-      severity: warning
-    annotations:
-      summary: "Application restart detected (instance {{ $labels.instance }})"
-      description: "The application has restarted within the last 5 minutes."
+      # Application restart detected
+      - alert: ApplicationRestart
+        expr: changes(process_start_time_seconds[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Application restart detected (instance {{ $labels.instance }})'
+          description: 'The application has restarted within the last 5 minutes.'
 
-  # API response time degradation
-  - alert: ApiResponseTimeDegradation
-    expr: histogram_quantile(0.5, sum(rate(http_request_duration_seconds_bucket{route=~"/api/.*"}[5m])) by (le, route)) > histogram_quantile(0.5, sum(rate(http_request_duration_seconds_bucket{route=~"/api/.*"}[60m])) by (le, route)) * 2
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "API response time degradation (route {{ $labels.route }})"
-      description: "The API response time has increased by more than 100% in the last 5 minutes compared to the last hour."
+      # API response time degradation
+      - alert: ApiResponseTimeDegradation
+        expr: histogram_quantile(0.5, sum(rate(http_request_duration_seconds_bucket{route=~"/api/.*"}[5m])) by (le, route)) > histogram_quantile(0.5, sum(rate(http_request_duration_seconds_bucket{route=~"/api/.*"}[60m])) by (le, route)) * 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API response time degradation (route {{ $labels.route }})'
+          description: 'The API response time has increased by more than 100% in the last 5 minutes compared to the last hour.'
 
-  # High authenticated request rate
-  - alert: HighAuthenticatedRequestRate
-    expr: sum(rate(http_requests_total{authenticated="true"}[1m])) > 100
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High authenticated request rate"
-      description: "More than 100 requests per second from authenticated users\n  VALUE = {{ $value }}"
+      # High authenticated request rate
+      - alert: HighAuthenticatedRequestRate
+        expr: sum(rate(http_requests_total{authenticated="true"}[1m])) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High authenticated request rate'
+          description: "More than 100 requests per second from authenticated users\n  VALUE = {{ $value }}"

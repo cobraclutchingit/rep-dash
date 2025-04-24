@@ -1,15 +1,14 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
 
-export default async function Home() {
+import { authOptions } from '@/lib/auth';
+
+export default async function Home(): Promise<void> {
   const session = await getServerSession(authOptions);
-  
-  // Redirect authenticated users to dashboard
+
   if (session?.user) {
-    redirect("/dashboard");
+    redirect('/dashboard');
   }
-  
-  // Redirect unauthenticated users to login page
-  redirect("/auth/login");
+
+  redirect('/login');
 }

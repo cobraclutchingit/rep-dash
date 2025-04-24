@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
   success: boolean;
   data?: T;
   error?: string;
@@ -20,7 +20,7 @@ export type ApiResponse<T = any> = {
 export function createSuccessResponse<T>(
   data: T,
   status = 200,
-  pagination?: ApiResponse["pagination"]
+  pagination?: ApiResponse<T>['pagination']
 ): NextResponse<ApiResponse<T>> {
   return NextResponse.json(
     {
@@ -38,18 +38,18 @@ export function createSuccessResponse<T>(
 export function createErrorResponse(
   error: string | ZodError | Error,
   status = 500
-): NextResponse<ApiResponse> {
+): NextResponse<ApiResponse<unknown>> {
   // Handle Zod validation errors
   if (error instanceof ZodError) {
     const fieldErrors = error.errors.map((e) => ({
-      path: e.path.join("."),
+      path: e.path.join('.'),
       message: e.message,
     }));
 
     return NextResponse.json(
       {
         success: false,
-        error: "Validation error",
+        error: 'Validation error',
         errors: fieldErrors,
       },
       { status: 400 }
@@ -71,21 +71,23 @@ export function createErrorResponse(
 /**
  * Helper for 404 responses
  */
-export function createNotFoundResponse(entity = "Resource"): NextResponse<ApiResponse> {
+export function createNotFoundResponse(entity = 'Resource'): NextResponse<ApiResponse<unknown>> {
   return createErrorResponse(`${entity} not found`, 404);
 }
 
 /**
  * Helper for unauthorized responses
  */
-export function createUnauthorizedResponse(): NextResponse<ApiResponse> {
-  return createErrorResponse("Unauthorized", 401);
+export function createUnauthorizedResponse(): NextResponse<ApiResponse<unknown>> {
+  return createErrorResponse('Unauthorized', 401);
 }
 
 /**
  * Helper for forbidden responses
  */
-export function createForbiddenResponse(message = "You don't have permission to perform this action"): NextResponse<ApiResponse> {
+export function createForbiddenResponse(
+  message = "You don't have permission to perform this action"
+): NextResponse<ApiResponse<unknown>> {
   return createErrorResponse(message, 403);
 }
 
@@ -99,6 +101,6 @@ export function createResourceResponse<T>(data: T): NextResponse<ApiResponse<T>>
 /**
  * Response for empty success (e.g., deletion)
  */
-export function createEmptySuccessResponse(): NextResponse<ApiResponse> {
+export function createEmptySuccessResponse(): NextResponse<ApiResponse<unknown>> {
   return createSuccessResponse({}, 204);
 }

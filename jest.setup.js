@@ -1,25 +1,23 @@
-// Optional: configure or set up a testing framework before each test
+/* eslint-disable @typescript-eslint/no-require-imports */
 import '@testing-library/jest-dom';
 import 'jest-fetch-mock';
+import { jest } from '@jest/globals';
+import { PrismaClient } from '@prisma/client';
 
-// Mock the fetch API
 global.fetch = require('jest-fetch-mock');
 
-// Mock ResizeObserver (not available in jsdom)
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
 
-// Mock IntersectionObserver (not available in jsdom)
 global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
 
-// Mock next/router
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn().mockReturnValue({
     push: jest.fn(),
@@ -40,7 +38,6 @@ jest.mock('next/navigation', () => ({
   useSearchParams: jest.fn().mockReturnValue(new URLSearchParams()),
 }));
 
-// Mock next-auth
 jest.mock('next-auth/react', () => ({
   useSession: jest.fn().mockReturnValue({
     data: {
@@ -61,7 +58,12 @@ jest.mock('next-auth/react', () => ({
   getSession: jest.fn(),
 }));
 
-// Mock date for consistent testing
+const mockedPrisma = new PrismaClient();
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockedPrisma),
+}));
+global.mockedPrisma = mockedPrisma;
+
 jest.mock('mockdate', () => ({
   set: (date) => {
     global.Date.now = () => (typeof date === 'string' ? new Date(date) : date).getTime();
@@ -71,7 +73,6 @@ jest.mock('mockdate', () => ({
   },
 }));
 
-// Mock the toast component
 jest.mock('@/components/ui/toast', () => ({
   toast: jest.fn(),
   successToast: jest.fn(),
@@ -81,8 +82,22 @@ jest.mock('@/components/ui/toast', () => ({
   ToastProvider: jest.fn().mockImplementation(({ children }) => children),
 }));
 
-// Reset mocks before each test
 beforeEach(() => {
   fetch.resetMocks();
   jest.clearAllMocks();
+  mockedPrisma.$transaction = jest.fn();
+  mockedPrisma.leaderboard.findUnique = jest.fn();
+  mockedPrisma.leaderboardEntry.findMany = jest.fn();
+  mockedPrisma.user.findMany = jest.fn();
+  mockedPrisma.user.count = jest.fn();
+  mockedPrisma.user.findUnique = jest.fn();
+  mockedPrisma.leaderboardEntry.create = jest.fn();
+  mockedPrisma.calendarEvent.findUnique = jest.fn();
+  mockedPrisma.calendarEvent.update = jest.fn();
+  mockedPrisma.calendarEvent.delete = jest.fn();
+  mockedPrisma.announcement.findUnique = jest.fn();
+  mockedPrisma.announcement.findMany = jest.fn();
+  mockedPrisma.notification.findMany = jest.fn();
+  mockedPrisma.onboardingStep.findUnique = jest.fn();
+  mockedPrisma.onboardingStep.update = jest.fn();
 });

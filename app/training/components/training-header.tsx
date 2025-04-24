@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
 interface TrainingHeaderProps {
   totalModules: number;
@@ -17,48 +17,48 @@ export default function TrainingHeader({
 }: TrainingHeaderProps) {
   return (
     <div className="mb-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col justify-between md:flex-row md:items-center">
         <h1 className="text-3xl font-bold">Training Portal</h1>
-        <div className="flex space-x-2 mt-4 md:mt-0">
+        <div className="mt-4 flex space-x-2 md:mt-0">
           <Link
             href="/training/my-progress"
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/80"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-4 py-2 text-sm font-medium"
           >
             My Progress
           </Link>
           <Link
             href="/training/certificates"
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/80"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-4 py-2 text-sm font-medium"
           >
             Certificates
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-card text-card-foreground rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Overall Progress</h3>
-          <div className="w-full bg-secondary rounded-full h-4 mb-2">
-            <div 
-              className="bg-primary h-4 rounded-full" 
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="bg-card text-card-foreground rounded-lg p-6 shadow">
+          <h3 className="text-muted-foreground mb-2 text-sm font-medium">Overall Progress</h3>
+          <div className="bg-secondary mb-2 h-4 w-full rounded-full">
+            <div
+              className="bg-primary h-4 rounded-full"
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
           <p className="text-2xl font-bold">{progressPercentage}%</p>
         </div>
-        
-        <div className="bg-card text-card-foreground rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Modules</h3>
+
+        <div className="bg-card text-card-foreground rounded-lg p-6 shadow">
+          <h3 className="text-muted-foreground mb-2 text-sm font-medium">Total Modules</h3>
           <p className="text-2xl font-bold">{totalModules}</p>
         </div>
-        
-        <div className="bg-card text-card-foreground rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Completed</h3>
+
+        <div className="bg-card text-card-foreground rounded-lg p-6 shadow">
+          <h3 className="text-muted-foreground mb-2 text-sm font-medium">Completed</h3>
           <p className="text-2xl font-bold">{completedModules}</p>
         </div>
-        
-        <div className="bg-card text-card-foreground rounded-lg shadow p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">In Progress</h3>
+
+        <div className="bg-card text-card-foreground rounded-lg p-6 shadow">
+          <h3 className="text-muted-foreground mb-2 text-sm font-medium">In Progress</h3>
           <p className="text-2xl font-bold">{inProgressModules}</p>
         </div>
       </div>

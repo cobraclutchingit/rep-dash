@@ -1,12 +1,10 @@
-"use client";
+'use client';
 
-import { 
-  useQuery, 
-  useMutation, 
-  useQueryClient 
-} from "@tanstack/react-query";
-import { apiClient } from "../api-client";
-import { toast } from "@/components/ui/toast";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { successToast } from '@/components/ui/toast';
+
+import { apiClient } from '../api-client';
 
 export interface User {
   id: string;
@@ -33,9 +31,9 @@ export interface User {
  */
 export function useCurrentUser() {
   return useQuery({
-    queryKey: ["currentUser"],
+    queryKey: ['currentUser'],
     queryFn: async () => {
-      const response = await apiClient.get<User>("/users/me");
+      const response = await apiClient.get<User>('/users/me');
       return response.data;
     },
   });
@@ -46,7 +44,7 @@ export function useCurrentUser() {
  */
 export function useUser(userId: string) {
   return useQuery({
-    queryKey: ["users", userId],
+    queryKey: ['users', userId],
     queryFn: async () => {
       const response = await apiClient.get<User>(`/users/${userId}`);
       return response.data;
@@ -67,13 +65,13 @@ export function useUsers(params?: {
   search?: string;
 }) {
   return useQuery({
-    queryKey: ["users", params],
+    queryKey: ['users', params],
     queryFn: async () => {
       const response = await apiClient.get<{
         users: User[];
         totalCount: number;
         totalPages: number;
-      }>("/users", { params });
+      }>('/users', { params });
       return response.data;
     },
   });
@@ -86,32 +84,25 @@ export function useUsers(params?: {
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({
-      userId,
-      data,
-    }: {
-      userId: string;
-      data: Partial<User>;
-    }) => {
+    mutationFn: async ({ userId, data }: { userId: string; data: Partial<User> }) => {
       const response = await apiClient.patch<User>(`/users/${userId}`, data);
       return response.data;
     },
     onSuccess: (data, variables) => {
       // Update queries that contain this user
-      queryClient.invalidateQueries({ queryKey: ["users", variables.userId] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      
+      queryClient.invalidateQueries({ queryKey: ['users', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+
       // If updating the current user, update that query too
-      if (data.id === variables.userId) {
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      if (data?.id && data.id === variables.userId) {
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       }
-      
-      toast({
-        title: "Success",
-        description: "User profile updated successfully",
-        variant: "success",
+
+      successToast({
+        title: 'Success',
+        description: 'User profile updated successfully',
       });
     },
   });
@@ -127,14 +118,13 @@ export function useChangePassword() {
       newPassword: string;
       confirmPassword: string;
     }) => {
-      const response = await apiClient.post("/auth/change-password", data);
+      const response = await apiClient.post('/change-password', data);
       return response.data;
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Password changed successfully",
-        variant: "success",
+      successToast({
+        title: 'Success',
+        description: 'Password changed successfully',
       });
     },
   });
@@ -146,14 +136,13 @@ export function useChangePassword() {
 export function useForgotPassword() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const response = await apiClient.post("/auth/forgot-password", { email });
+      const response = await apiClient.post('/forgot-password', { email });
       return response.data;
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Password reset email sent. Please check your inbox.",
-        variant: "success",
+      successToast({
+        title: 'Success',
+        description: 'Password reset email sent. Please check your inbox.',
       });
     },
   });
@@ -164,19 +153,14 @@ export function useForgotPassword() {
  */
 export function useResetPassword() {
   return useMutation({
-    mutationFn: async (data: {
-      token: string;
-      password: string;
-      confirmPassword: string;
-    }) => {
-      const response = await apiClient.post("/auth/reset-password", data);
+    mutationFn: async (data: { token: string; password: string; confirmPassword: string }) => {
+      const response = await apiClient.post('/reset-password', data);
       return response.data;
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Password reset successfully. You can now log in with your new password.",
-        variant: "success",
+      successToast({
+        title: 'Success',
+        description: 'Password reset successfully. You can now log in with your new password.',
       });
     },
   });
@@ -197,14 +181,13 @@ export function useRegisterUser() {
       bio?: string;
       territory?: string;
     }) => {
-      const response = await apiClient.post("/auth/register", data);
+      const response = await apiClient.post('/register', data);
       return response.data;
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Registration successful. You can now log in.",
-        variant: "success",
+      successToast({
+        title: 'Success',
+        description: 'Registration successful. You can now log in.',
       });
     },
   });

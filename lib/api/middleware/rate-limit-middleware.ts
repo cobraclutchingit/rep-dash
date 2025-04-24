@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createErrorResponse } from "../utils/api-response";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession, Session } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+
+import { createErrorResponse } from '../utils/api-response';
 
 // Simple in-memory rate limiting store
 // In production, use a more robust solution like Redis
@@ -11,7 +13,8 @@ const rateLimitStore = new Map<string, { count: number; timestamp: number }>();
 function cleanupRateLimitStore() {
   const now = Date.now();
   for (const [key, value] of rateLimitStore.entries()) {
-    if (now - value.timestamp > 60000) { // 1 minute window
+    if (now - value.timestamp > 60000) {
+      // 1 minute window
       rateLimitStore.delete(key);
     }
   }
@@ -30,18 +33,14 @@ if (typeof window === 'undefined') {
  */
 export async function withRateLimit(
   request: NextRequest,
-  handler: (req: NextRequest, session?: any) => Promise<NextResponse>,
+  handler: (req: NextRequest, session?: Session) => Promise<NextResponse>,
   options: {
     limit?: number; // Default: 60
     windowMs?: number; // Default: 60000 (1 minute)
-    identifierFn?: (req: NextRequest, session?: any) => string;
+    identifierFn?: (req: NextRequest, session?: Session) => string;
   } = {}
 ) {
-  const {
-    limit = 60,
-    windowMs = 60000,
-    identifierFn,
-  } = options;
+  const { limit = 60, windowMs = 60000, identifierFn } = options;
 
   // Get session if available
   const session = await getServerSession(authOptions);
@@ -49,10 +48,13 @@ export async function withRateLimit(
   // Determine rate limit key
   let identifier: string;
   if (identifierFn) {
-    identifier = identifierFn(request, session);
+    identifier = identifierFn(request, session as Session | undefined);
   } else {
     // Default behavior: use IP address or userId if authenticated
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
     identifier = session?.user?.id || ip;
   }
 
@@ -77,14 +79,17 @@ export async function withRateLimit(
 
   // Check if over limit
   if (currentLimit.count > limit) {
-    return createErrorResponse("Too many requests, please try again later", 429);
+    return createErrorResponse('Too many requests, please try again later', 429);
   }
 
   // Set rate limit headers
-  const response = await handler(request, session);
+  const response = await handler(request, session as Session | undefined);
   response.headers.set('X-RateLimit-Limit', limit.toString());
   response.headers.set('X-RateLimit-Remaining', Math.max(0, limit - currentLimit.count).toString());
-  response.headers.set('X-RateLimit-Reset', (Math.ceil(currentLimit.timestamp / 1000) + windowMs / 1000).toString());
+  response.headers.set(
+    'X-RateLimit-Reset',
+    (Math.ceil(currentLimit.timestamp / 1000) + windowMs / 1000).toString()
+  );
 
   return response;
 }

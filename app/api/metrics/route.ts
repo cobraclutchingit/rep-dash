@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { promisify } from 'util';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { register, collectDefaultMetrics, Counter, Histogram, Gauge } from 'prom-client';
 
+import prisma from '@/lib/prisma';
+
 // Initialize metrics collection (should be done only once)
-// This code should remain outside of the handler to persist metrics between requests
 collectDefaultMetrics({ prefix: 'rep_dashboard_' });
 
 // Define custom metrics
@@ -65,9 +62,9 @@ async function updateMetrics() {
     const activeUserCount = await prisma.user.count({
       where: {
         lastLoginAt: {
-          gte: fifteenMinutesAgo
-        }
-      }
+          gte: fifteenMinutesAgo,
+        },
+      },
     });
     activeUsers.set(activeUserCount);
 
@@ -78,47 +75,44 @@ async function updateMetrics() {
     // Count total training modules
     const moduleCount = await prisma.trainingModule.count({
       where: {
-        isPublished: true
-      }
+        isPublished: true,
+      },
     });
     totalTrainingModules.set(moduleCount);
 
     // Calculate training completion rates
     const modules = await prisma.trainingModule.findMany({
       where: {
-        isPublished: true
+        isPublished: true,
       },
       select: {
         id: true,
         _count: {
           select: {
-            progress: true
-          }
-        }
-      }
+            progress: true,
+          },
+        },
+      },
     });
 
-    for (const module of modules) {
+    for (const trainingModule of modules) {
       const completionCount = await prisma.trainingProgress.count({
         where: {
-          moduleId: module.id,
-          status: 'COMPLETED'
-        }
+          moduleId: trainingModule.id,
+          status: 'COMPLETED',
+        },
       });
 
-      const completionRate = module._count.progress > 0 
-        ? completionCount / module._count.progress 
-        : 0;
+      const completionRate =
+        trainingModule._count.progress > 0 ? completionCount / trainingModule._count.progress : 0;
 
-      trainingCompletionRate.set({ module_id: module.id }, completionRate);
+      trainingCompletionRate.set({ module_id: trainingModule.id }, completionRate);
     }
 
     // Calculate API error rates (for the last hour)
-    // This would typically come from your logging/analytics system
-    // Here's a placeholder implementation
+    // Placeholder implementation
     const endpoints = ['/api/users', '/api/training', '/api/leaderboard', '/api/calendar'];
-    endpoints.forEach(endpoint => {
-      // Placeholder - in a real implementation, you'd query your logs
+    endpoints.forEach((endpoint) => {
       const errorRate = Math.random() * 0.05; // Random value under 5%
       apiErrorRate.set({ endpoint }, errorRate);
     });
@@ -134,16 +128,11 @@ let metricsTimer: NodeJS.Timeout | null = null;
 // Start the metrics update timer
 if (typeof global !== 'undefined' && !metricsTimer) {
   metricsTimer = setInterval(updateMetrics, metricsUpdateInterval);
-  // Initial update
   updateMetrics().catch(console.error);
 }
 
 // Middleware to track request metrics
-export function trackRequestMetrics(
-  req: NextRequest,
-  res: NextResponse,
-  startTime: number
-) {
+export function trackRequestMetrics(req: NextRequest, res: NextResponse, startTime: number) {
   const method = req.method;
   const route = req.nextUrl.pathname;
   const status = res.status;
@@ -173,14 +162,13 @@ export function trackDbQuery(operation: string, model: string, duration: number)
 }
 
 // This handler will expose Prometheus metrics
-export async function GET(req: NextRequest) {
-  // Check if request is authorized (optional for internal metrics)
-  // This could be a token check, IP check, or other authorization method
-  // For this example, we're allowing access if the request has a special header
-  const isAuthorized = req.headers.get('x-metrics-auth') === process.env.METRICS_AUTH_TOKEN;
-  const isLocalhost = req.headers.get('host')?.includes('localhost') || 
-                     req.headers.get('x-forwarded-for') === '127.0.0.1';
-  
+export async function GET(_req: NextRequest) {
+  // Check if request is authorized
+  const isAuthorized = _req.headers.get('x-metrics-auth') === process.env.METRICS_AUTH_TOKEN;
+  const isLocalhost =
+    _req.headers.get('host')?.includes('localhost') ||
+    _req.headers.get('x-forwarded-for') === '127.0.0.1';
+
   if (!isAuthorized && !isLocalhost) {
     return new NextResponse('Unauthorized', { status: 401 });
   }

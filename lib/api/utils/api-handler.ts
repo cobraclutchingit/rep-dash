@@ -1,10 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { ZodSchema } from "zod";
-import { createErrorResponse, createUnauthorizedResponse, createForbiddenResponse } from "./api-response";
-import { ApiError } from "./api-error";
-import * as permissions from "@/lib/utils/permissions";
+import { UserRole } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession, Session } from 'next-auth';
+import { ZodSchema } from 'zod';
+
+import { authOptions } from '@/lib/auth';
+import * as permissions from '@/lib/utils/permissions';
+
+import { ApiError } from './api-error';
+import {
+  createErrorResponse,
+  createUnauthorizedResponse,
+  createForbiddenResponse,
+} from './api-response';
 
 /**
  * Options for the API handler
@@ -24,15 +31,18 @@ interface ApiHandlerOptions {
 interface RouteHandlerOptions {
   // Request validation
   validator?: ZodSchema;
-  
+
   // Authentication/Authorization
   auth?: boolean;
-  roles?: string[];
-  permission?: (session: any, ...args: any[]) => boolean;
-  permissionArgs?: any[];
-  
+  roles?: UserRole[];
+  permission?: (session: Session, ...args: unknown[]) => boolean;
+  permissionArgs?: unknown[];
+
   // Request handling
-  handler: (req: NextRequest, context: { session?: any; params?: any }) => Promise<NextResponse>;
+  handler: (
+    req: NextRequest,
+    context: { session?: Session; params?: unknown }
+  ) => Promise<NextResponse>;
 }
 
 /**
@@ -40,49 +50,52 @@ interface RouteHandlerOptions {
  * including validation, authentication, and error handling.
  */
 export function createApiHandler(options: ApiHandlerOptions) {
-  return async (req: NextRequest, context: { params: any }) => {
+  return async (req: NextRequest, context: { params: unknown }) => {
     const method = req.method as keyof ApiHandlerOptions;
     const methodOptions = options[method];
-    
+
     // Return 405 Method Not Allowed if method is not supported
     if (!methodOptions) {
       return createErrorResponse(`Method ${method} Not Allowed`, 405);
     }
-    
+
     try {
       // Get session if authentication is needed
-      let session = null;
+      let session: Session | null = null;
       if (methodOptions.auth || methodOptions.roles || methodOptions.permission) {
         session = await getServerSession(authOptions);
-        
+
         // Check authentication
         if (!session) {
           return createUnauthorizedResponse();
         }
-        
+
         // Check if user is active
         if (!permissions.isActive(session)) {
-          return createForbiddenResponse("Your account is currently suspended");
+          return createForbiddenResponse('Your account is currently suspended');
         }
-        
+
         // Check roles if specified
-        if (methodOptions.roles && !permissions.hasOneOfRoles(session, methodOptions.roles as any[])) {
+        if (methodOptions.roles && !permissions.hasOneOfRoles(session, methodOptions.roles)) {
           return createForbiddenResponse();
         }
-        
+
         // Check permissions if specified
-        if (methodOptions.permission && !methodOptions.permission(session, ...(methodOptions.permissionArgs || []))) {
+        if (
+          methodOptions.permission &&
+          !methodOptions.permission(session, ...(methodOptions.permissionArgs || []))
+        ) {
           return createForbiddenResponse();
         }
       }
-      
+
       // Validate request body if needed
-      if (methodOptions.validator && ["POST", "PUT", "PATCH"].includes(method)) {
+      if (methodOptions.validator && ['POST', 'PUT', 'PATCH'].includes(method)) {
         const body = await req.json();
         try {
           // Validate the request body
           const validatedData = methodOptions.validator.parse(body);
-          
+
           // Replace the request with a modified request containing the validated data
           req = new NextRequest(req.url, {
             method: req.method,
@@ -102,23 +115,26 @@ export function createApiHandler(options: ApiHandlerOptions) {
           return createErrorResponse(error as Error, 400);
         }
       }
-      
+
       // Execute handler
-      return await methodOptions.handler(req, { session, params: context.params });
+      return await methodOptions.handler(req, {
+        session: session as Session | undefined,
+        params: context.params,
+      });
     } catch (error) {
       // Handle different error types
       if (error instanceof ApiError) {
         return createErrorResponse(error.message, error.status);
       }
-      
+
       // Log error for debugging
-      console.error("API error:", error);
-      
+      console.error('API error:', error);
+
       // Return generic error response
       return createErrorResponse(
-        process.env.NODE_ENV === "development" && error instanceof Error 
-          ? error.message 
-          : "Internal Server Error",
+        process.env.NODE_ENV === 'development' && error instanceof Error
+          ? error.message
+          : 'Internal Server Error',
         500
       );
     }

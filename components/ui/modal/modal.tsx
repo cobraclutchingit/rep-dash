@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { cn } from "@/lib/utils";
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+
+import { cn } from '@/lib/utils';
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   showClose?: boolean;
-  size?: "sm" | "md" | "lg" | "xl" | "full";
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
 export function Modal({
@@ -23,14 +24,14 @@ export function Modal({
   children,
   className,
   showClose = true,
-  size = "md",
+  size = 'md',
 }: ModalProps) {
   const sizeClasses = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    full: "max-w-[90vw] max-h-[90vh]",
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    full: 'max-w-[90vw] max-h-[90vh]',
   };
 
   return (
@@ -61,7 +62,7 @@ export function Modal({
             >
               <Dialog.Panel
                 className={cn(
-                  "w-full transform rounded-lg bg-card p-6 text-left align-middle shadow-xl transition-all",
+                  'bg-card w-full transform rounded-lg p-6 text-left align-middle shadow-xl transition-all',
                   sizeClasses[size],
                   className
                 )}
@@ -69,7 +70,7 @@ export function Modal({
                 {showClose && (
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
+                    className="ring-offset-background absolute top-4 right-4 rounded-sm p-1 opacity-70 transition-opacity hover:opacity-100"
                     aria-label="Close"
                   >
                     <svg
@@ -89,21 +90,18 @@ export function Modal({
                 )}
 
                 {title && (
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-foreground"
-                  >
+                  <Dialog.Title as="h3" className="text-foreground text-lg leading-6 font-medium">
                     {title}
                   </Dialog.Title>
                 )}
 
                 {description && (
-                  <Dialog.Description className="mt-2 text-sm text-muted-foreground">
+                  <Dialog.Description className="text-muted-foreground mt-2 text-sm">
                     {description}
                   </Dialog.Description>
                 )}
 
-                <div className={cn(title || description ? "mt-4" : "")}>{children}</div>
+                <div className={cn(title || description ? 'mt-4' : '')}>{children}</div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
-import { AuthProvider } from "./auth-provider";
-import { ThemeProvider } from "./theme-provider";
-import { ReactQueryProvider } from "@/lib/api/client/queries";
-import { ToastProvider } from "@/components/ui/toast";
+import { ReactNode } from 'react';
+
+import { ToastProvider } from '@/components/ui/toast';
+import { ReactQueryProvider } from '@/lib/api/client/queries';
+
+import { AuthProvider } from './auth-provider';
+import { ThemeProvider } from './theme-provider';
 
 /**
  * Global application provider component that wraps the app with all necessary providers.

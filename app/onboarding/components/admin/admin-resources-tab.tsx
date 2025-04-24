@@ -1,27 +1,36 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ResourceType } from "@prisma/client";
+import { ResourceType } from '@prisma/client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+interface Resource {
+  id: string;
+  title: string;
+  description: string | null;
+  type: ResourceType;
+  url: string;
+  isExternal: boolean;
+}
 
 interface AdminResourcesTabProps {
-  resources: any[];
+  resources: Resource[];
 }
 
 export default function AdminResourcesTab({ resources }: AdminResourcesTabProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedResource, setSelectedResource] = useState<any>(null);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    type: "LINK" as ResourceType,
-    url: "",
+    title: '',
+    description: '',
+    type: 'LINK' as ResourceType,
+    url: '',
     isExternal: true,
   });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Handle form input changes
   const handleChange = (
@@ -29,7 +38,7 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
   ) => {
     const { name, value, type } = e.target;
 
-    if (type === "checkbox") {
+    if (type === 'checkbox') {
       setFormData({
         ...formData,
         [name]: (e.target as HTMLInputElement).checked,
@@ -46,67 +55,63 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
   const handleNewResource = () => {
     setSelectedResource(null);
     setFormData({
-      title: "",
-      description: "",
-      type: "LINK",
-      url: "",
+      title: '',
+      description: '',
+      type: 'LINK',
+      url: '',
       isExternal: true,
     });
     setIsModalOpen(true);
-    setError("");
+    setError('');
   };
 
   // Open modal to edit resource
-  const handleEditResource = (resource: any) => {
+  const handleEditResource = (resource: Resource) => {
     setSelectedResource(resource);
     setFormData({
       title: resource.title,
-      description: resource.description || "",
+      description: resource.description || '',
       type: resource.type,
       url: resource.url,
       isExternal: resource.isExternal,
     });
     setIsModalOpen(true);
-    setError("");
+    setError('');
   };
 
   // Submit form to create/update resource
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
       // Validate URL format
-      try {
-        new URL(formData.url);
-      } catch (err) {
-        throw new Error("Please enter a valid URL (including http:// or https://)");
-      }
+      new URL(formData.url);
 
       const url = selectedResource
         ? `/api/onboarding/resources/${selectedResource.id}`
-        : "/api/onboarding/resources";
+        : '/api/onboarding/resources';
 
-      const method = selectedResource ? "PUT" : "POST";
+      const method = selectedResource ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save resource");
+        throw new Error('Failed to save resource');
       }
 
       // Refresh the page to show updated data
       router.refresh();
       setIsModalOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } catch {
+      setError('Please enter a valid URL (including http:// or https://)');
     } finally {
       setLoading(false);
     }
@@ -114,26 +119,30 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
 
   // Delete a resource
   const handleDeleteResource = async (resourceId: string) => {
-    if (!confirm("Are you sure you want to delete this resource? This will remove it from all steps that use it.")) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this resource? This will remove it from all steps that use it.'
+      )
+    ) {
       return;
     }
 
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
       const response = await fetch(`/api/onboarding/resources/${resourceId}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete resource");
+        throw new Error('Failed to delete resource');
       }
 
       // Refresh the page to show updated data
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } catch {
+      setError('An unknown error occurred');
     } finally {
       setLoading(false);
     }
@@ -142,29 +151,29 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
   // Get resource type icon
   const getResourceIcon = (type: ResourceType) => {
     switch (type) {
-      case "VIDEO":
-        return "🎬";
-      case "PDF":
-        return "📄";
-      case "DOCUMENT":
-        return "📝";
-      case "PRESENTATION":
-        return "📊";
-      case "SPREADSHEET":
-        return "📈";
-      case "IMAGE":
-        return "🖼️";
-      case "AUDIO":
-        return "🔊";
-      case "LINK":
+      case 'VIDEO':
+        return '🎬';
+      case 'PDF':
+        return '📄';
+      case 'DOCUMENT':
+        return '📝';
+      case 'PRESENTATION':
+        return '📊';
+      case 'SPREADSHEET':
+        return '📈';
+      case 'IMAGE':
+        return '🖼️';
+      case 'AUDIO':
+        return '🔊';
+      case 'LINK':
       default:
-        return "🔗";
+        return '🔗';
     }
   };
 
   // Get resource type display name
   const getResourceTypeName = (type: ResourceType) => {
-    return type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, " ");
+    return type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, ' ');
   };
 
   // Filter resources based on search term
@@ -180,16 +189,14 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Onboarding Resources</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage resources used in onboarding steps
-          </p>
+          <p className="text-muted-foreground text-sm">Manage resources used in onboarding steps</p>
         </div>
         <button
           onClick={handleNewResource}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2"
         >
           Add New Resource
         </button>
@@ -203,32 +210,30 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
             placeholder="Search resources..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-3 pl-10 rounded-md border border-input bg-background"
+            className="border-input bg-background w-full rounded-md border p-3 pl-10"
           />
-          <span className="absolute left-3 top-3 text-muted-foreground">🔍</span>
+          <span className="text-muted-foreground absolute top-3 left-3">🔍</span>
         </div>
       </div>
 
       {/* Error message */}
       {error && (
-        <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-6">
-          {error}
-        </div>
+        <div className="bg-destructive/10 text-destructive mb-6 rounded-md p-3">{error}</div>
       )}
 
       {/* No resources message */}
       {resources.length === 0 && (
-        <div className="text-center p-12 bg-card rounded-lg border">
-          <div className="h-16 w-16 mx-auto bg-muted rounded-full flex items-center justify-center text-2xl mb-4">
+        <div className="bg-card rounded-lg border p-12 text-center">
+          <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full text-2xl">
             📚
           </div>
-          <h3 className="text-lg font-medium mb-2">No Resources Added</h3>
+          <h3 className="mb-2 text-lg font-medium">No Resources Added</h3>
           <p className="text-muted-foreground mb-6">
             Add resources like videos, PDFs, and links to use in your onboarding steps
           </p>
           <button
             onClick={handleNewResource}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2"
           >
             Add First Resource
           </button>
@@ -237,14 +242,11 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
 
       {/* Resources exist but none match search */}
       {resources.length > 0 && filteredResources.length === 0 && (
-        <div className="text-center p-8 bg-card rounded-lg border">
-          <h3 className="text-lg font-medium mb-2">No Matching Resources</h3>
+        <div className="bg-card rounded-lg border p-8 text-center">
+          <h3 className="mb-2 text-lg font-medium">No Matching Resources</h3>
           <p className="text-muted-foreground">
-            No resources match your search. Try different keywords or{" "}
-            <button
-              onClick={() => setSearchTerm("")}
-              className="text-primary hover:underline"
-            >
+            No resources match your search. Try different keywords or{' '}
+            <button onClick={() => setSearchTerm('')} className="text-primary hover:underline">
               clear the search
             </button>
             .
@@ -254,25 +256,22 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
 
       {/* Resources list */}
       {filteredResources.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredResources.map((resource) => (
-            <div
-              key={resource.id}
-              className="bg-card rounded-lg border overflow-hidden"
-            >
+            <div key={resource.id} className="bg-card overflow-hidden rounded-lg border">
               <div className="p-5">
-                <div className="flex items-start mb-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl mr-3">
+                <div className="mb-3 flex items-start">
+                  <div className="bg-primary/10 text-primary mr-3 flex h-10 w-10 items-center justify-center rounded-full text-xl">
                     {getResourceIcon(resource.type)}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-medium">{resource.title}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs px-2 py-1 bg-secondary rounded-full">
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="bg-secondary rounded-full px-2 py-1 text-xs">
                         {getResourceTypeName(resource.type)}
                       </span>
                       {resource.isExternal && (
-                        <span className="text-xs px-2 py-1 bg-blue-500/10 text-blue-500 rounded-full">
+                        <span className="rounded-full bg-blue-500/10 px-2 py-1 text-xs text-blue-500">
                           External
                         </span>
                       )}
@@ -281,33 +280,31 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
                 </div>
 
                 {resource.description && (
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {resource.description}
-                  </p>
+                  <p className="text-muted-foreground mb-3 text-sm">{resource.description}</p>
                 )}
 
-                <div className="flex items-center text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex items-center text-sm">
                   <a
                     href={resource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="truncate hover:text-primary hover:underline"
+                    className="hover:text-primary truncate hover:underline"
                   >
                     {resource.url}
                   </a>
                 </div>
               </div>
 
-              <div className="bg-muted/30 p-3 flex justify-end space-x-2">
+              <div className="bg-muted/30 flex justify-end space-x-2 p-3">
                 <button
                   onClick={() => handleEditResource(resource)}
-                  className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-md text-sm hover:bg-secondary/90"
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-3 py-1.5 text-sm"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDeleteResource(resource.id)}
-                  className="px-3 py-1.5 bg-destructive/10 text-destructive rounded-md text-sm hover:bg-destructive/20"
+                  className="bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md px-3 py-1.5 text-sm"
                 >
                   Delete
                 </button>
@@ -319,24 +316,24 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
 
       {/* Resource form modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-card text-card-foreground rounded-lg shadow-lg max-w-md w-full">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-card text-card-foreground w-full max-w-md rounded-lg shadow-lg">
+            <div className="border-b p-6">
               <h2 className="text-xl font-semibold">
-                {selectedResource ? "Edit Resource" : "Add New Resource"}
+                {selectedResource ? 'Edit Resource' : 'Add New Resource'}
               </h2>
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="p-6 space-y-4">
+              <div className="space-y-4 p-6">
                 {error && (
-                  <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+                  <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
                     {error}
                   </div>
                 )}
 
                 <div>
-                  <label htmlFor="title" className="block text-sm font-medium mb-1">
+                  <label htmlFor="title" className="mb-1 block text-sm font-medium">
                     Resource Title
                   </label>
                   <input
@@ -345,14 +342,14 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
                     type="text"
                     value={formData.title}
                     onChange={handleChange}
-                    className="w-full p-2 rounded-md border border-input bg-background"
+                    className="border-input bg-background w-full rounded-md border p-2"
                     placeholder="e.g., Product Introduction Video"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium mb-1">
+                  <label htmlFor="description" className="mb-1 block text-sm font-medium">
                     Description (Optional)
                   </label>
                   <textarea
@@ -360,14 +357,14 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    className="w-full p-2 rounded-md border border-input bg-background"
+                    className="border-input bg-background w-full rounded-md border p-2"
                     placeholder="A brief description of the resource..."
                     rows={2}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="type" className="block text-sm font-medium mb-1">
+                  <label htmlFor="type" className="mb-1 block text-sm font-medium">
                     Resource Type
                   </label>
                   <select
@@ -375,19 +372,20 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
                     name="type"
                     value={formData.type}
                     onChange={handleChange}
-                    className="w-full p-2 rounded-md border border-input bg-background"
+                    className="border-input bg-background w-full rounded-md border p-2"
                     required
                   >
                     {Object.values(ResourceType).map((type) => (
                       <option key={type} value={type}>
-                        {getResourceIcon(type as ResourceType)} {getResourceTypeName(type as ResourceType)}
+                        {getResourceIcon(type as ResourceType)}{' '}
+                        {getResourceTypeName(type as ResourceType)}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label htmlFor="url" className="block text-sm font-medium mb-1">
+                  <label htmlFor="url" className="mb-1 block text-sm font-medium">
                     Resource URL
                   </label>
                   <input
@@ -396,11 +394,11 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
                     type="text"
                     value={formData.url}
                     onChange={handleChange}
-                    className="w-full p-2 rounded-md border border-input bg-background"
+                    className="border-input bg-background w-full rounded-md border p-2"
                     placeholder="https://..."
                     required
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     Enter the full URL including http:// or https://
                   </p>
                 </div>
@@ -416,32 +414,32 @@ export default function AdminResourcesTab({ resources }: AdminResourcesTabProps)
                     />
                     <span>External Resource</span>
                   </label>
-                  <p className="text-xs text-muted-foreground mt-1 ml-6">
+                  <p className="text-muted-foreground mt-1 ml-6 text-xs">
                     Check if this resource is hosted on an external website
                   </p>
                 </div>
               </div>
 
-              <div className="p-6 border-t bg-muted/30 flex justify-end space-x-2">
+              <div className="bg-muted/30 flex justify-end space-x-2 border-t p-6">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-4 py-2"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? (
                     <span className="flex items-center">
-                      <span className="mr-1 h-4 w-4 border-2 border-primary-foreground border-r-transparent animate-spin rounded-full"></span>
+                      <span className="border-primary-foreground mr-1 h-4 w-4 animate-spin rounded-full border-2 border-r-transparent"></span>
                       Saving...
                     </span>
                   ) : (
-                    "Save Resource"
+                    'Save Resource'
                   )}
                 </button>
               </div>

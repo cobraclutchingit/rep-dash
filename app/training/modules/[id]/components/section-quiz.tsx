@@ -1,39 +1,55 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { TrainingSection } from "@prisma/client";
+import { TrainingSection } from '@prisma/client';
+import { useState } from 'react';
+
+interface QuizQuestion {
+  id: string;
+  question: string;
+  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'OPEN_ENDED';
+  points: number;
+  options: {
+    id: string;
+    text: string;
+  }[];
+}
+
+interface QuizResult {
+  correctAnswers: number;
+  totalQuestions: number;
+}
 
 interface SectionQuizProps {
   moduleId: string;
   section: TrainingSection & {
-    quizQuestions: any[];
+    quizQuestions: QuizQuestion[];
   };
   progressId: string;
   onComplete: () => void;
 }
 
-export default function SectionQuiz({ 
-  moduleId, 
-  section, 
-  progressId, 
-  onComplete 
+export default function SectionQuiz({
+  moduleId,
+  section,
+  progressId,
+  onComplete,
 }: SectionQuizProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[] | string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizResults, setQuizResults] = useState<any>(null);
+  const [quizResults, setQuizResults] = useState<QuizResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const questions = section.quizQuestions;
   const currentQuestion = questions[currentQuestionIndex];
-  
+
   const handleAnswer = (questionId: string, value: string | string[]) => {
     setAnswers({
       ...answers,
       [questionId]: value,
     });
   };
-  
+
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -41,88 +57,88 @@ export default function SectionQuiz({
       handleSubmitQuiz();
     }
   };
-  
+
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
-  
+
   const handleSubmitQuiz = async () => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
         questionId,
         selectedOptions: Array.isArray(answer) ? answer : [],
-        textAnswer: typeof answer === "string" ? answer : undefined,
+        textAnswer: typeof answer === 'string' ? answer : undefined,
       }));
-      
+
       const response = await fetch(`/api/training/modules/${moduleId}/quiz`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           progressId,
           answers: formattedAnswers,
         }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setQuizResults(data);
         setQuizSubmitted(true);
       } else {
-        console.error("Failed to submit quiz");
+        console.error('Failed to submit quiz');
       }
     } catch (error) {
-      console.error("Error submitting quiz:", error);
+      console.error('Error submitting quiz:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   if (!currentQuestion) {
     return <div>No questions available for this quiz.</div>;
   }
-  
+
   if (quizSubmitted && quizResults) {
-    const { score, totalQuestions, correctAnswers } = quizResults;
+    const { correctAnswers, totalQuestions } = quizResults;
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-    
+
     return (
       <div className="text-center">
-        <h3 className="text-xl font-bold mb-4">Quiz Results</h3>
-        
+        <h3 className="mb-4 text-xl font-bold">Quiz Results</h3>
+
         <div className="mb-6">
-          <div className="w-32 h-32 rounded-full border-8 mx-auto flex items-center justify-center">
+          <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-8">
             <span className="text-2xl font-bold">{percentage}%</span>
           </div>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-muted-foreground mt-2">
             You got {correctAnswers} out of {totalQuestions} questions correct.
           </p>
         </div>
-        
+
         <div className="mb-8">
           {percentage >= 70 ? (
-            <div className="bg-green-500/10 text-green-500 p-4 rounded-md">
+            <div className="rounded-md bg-green-500/10 p-4 text-green-500">
               <p className="font-semibold">Congratulations! You passed the quiz.</p>
             </div>
           ) : (
-            <div className="bg-destructive/10 text-destructive p-4 rounded-md">
+            <div className="bg-destructive/10 text-destructive rounded-md p-4">
               <p className="font-semibold">You did not pass the quiz. Please try again.</p>
             </div>
           )}
         </div>
-        
+
         <div className="flex justify-center">
           {percentage >= 70 ? (
             <button
               onClick={onComplete}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2"
             >
               Continue
             </button>
@@ -133,7 +149,7 @@ export default function SectionQuiz({
                 setCurrentQuestionIndex(0);
                 setAnswers({});
               }}
-              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-4 py-2"
             >
               Retry Quiz
             </button>
@@ -142,15 +158,15 @@ export default function SectionQuiz({
       </div>
     );
   }
-  
+
   const renderQuestionContent = () => {
-    if (currentQuestion.questionType === "MULTIPLE_CHOICE") {
+    if (currentQuestion.questionType === 'MULTIPLE_CHOICE') {
       return (
         <div className="space-y-3">
-          {currentQuestion.options.map((option: any) => (
+          {currentQuestion.options.map((option) => (
             <label
               key={option.id}
-              className="flex items-center space-x-2 p-3 rounded-md bg-secondary/30 hover:bg-secondary/50 cursor-pointer"
+              className="bg-secondary/30 hover:bg-secondary/50 flex cursor-pointer items-center space-x-2 rounded-md p-3"
             >
               <input
                 type="radio"
@@ -165,16 +181,16 @@ export default function SectionQuiz({
           ))}
         </div>
       );
-    } else if (currentQuestion.questionType === "TRUE_FALSE") {
+    } else if (currentQuestion.questionType === 'TRUE_FALSE') {
       return (
         <div className="space-y-3">
           {[
-            { id: "true", text: "True" },
-            { id: "false", text: "False" },
+            { id: 'true', text: 'True' },
+            { id: 'false', text: 'False' },
           ].map((option) => (
             <label
               key={option.id}
-              className="flex items-center space-x-2 p-3 rounded-md bg-secondary/30 hover:bg-secondary/50 cursor-pointer"
+              className="bg-secondary/30 hover:bg-secondary/50 flex cursor-pointer items-center space-x-2 rounded-md p-3"
             >
               <input
                 type="radio"
@@ -189,55 +205,59 @@ export default function SectionQuiz({
           ))}
         </div>
       );
-    } else if (currentQuestion.questionType === "OPEN_ENDED") {
+    } else if (currentQuestion.questionType === 'OPEN_ENDED') {
       return (
         <textarea
-          value={answers[currentQuestion.id] as string || ""}
+          value={(answers[currentQuestion.id] as string) || ''}
           onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
-          className="w-full p-3 rounded-md border border-input bg-background min-h-[100px]"
+          className="border-input bg-background min-h-[100px] w-full rounded-md border p-3"
           placeholder="Enter your answer here..."
         />
       );
     }
-    
+
     return <p>Unsupported question type: {currentQuestion.questionType}</p>;
   };
-  
+
   return (
     <div>
       <div className="mb-6">
-        <div className="flex justify-between items-center text-sm text-muted-foreground mb-2">
-          <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-          <span>{currentQuestion.points} {currentQuestion.points === 1 ? "point" : "points"}</span>
+        <div className="text-muted-foreground mb-2 flex items-center justify-between text-sm">
+          <span>
+            Question {currentQuestionIndex + 1} of {questions.length}
+          </span>
+          <span>
+            {currentQuestion.points} {currentQuestion.points === 1 ? 'point' : 'points'}
+          </span>
         </div>
-        
-        <div className="w-full bg-secondary rounded-full h-2 mb-6">
-          <div 
-            className="bg-primary h-2 rounded-full" 
+
+        <div className="bg-secondary mb-6 h-2 w-full rounded-full">
+          <div
+            className="bg-primary h-2 rounded-full"
             style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
           ></div>
         </div>
-        
-        <h3 className="text-xl font-semibold mb-4">{currentQuestion.question}</h3>
-        
+
+        <h3 className="mb-4 text-xl font-semibold">{currentQuestion.question}</h3>
+
         {renderQuestionContent()}
       </div>
-      
+
       <div className="flex justify-between">
         <button
           onClick={handlePreviousQuestion}
           disabled={currentQuestionIndex === 0}
-          className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 disabled:opacity-50"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-4 py-2 disabled:opacity-50"
         >
           Previous
         </button>
-        
+
         <button
           onClick={handleNextQuestion}
           disabled={!answers[currentQuestion.id] || isSubmitting}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 disabled:opacity-50"
         >
-          {currentQuestionIndex === questions.length - 1 ? "Submit Quiz" : "Next"}
+          {currentQuestionIndex === questions.length - 1 ? 'Submit Quiz' : 'Next'}
         </button>
       </div>
     </div>

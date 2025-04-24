@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { canManageLinks } from "@/lib/utils/permissions";
-import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageLinks } from '@/lib/utils/permissions';
 
 // Helper to create slug from category
 function createSlug(category: string): string {
@@ -15,13 +17,13 @@ function createSlug(category: string): string {
 
 // GET /api/communication/links
 // Get all visible links for the current user
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -29,39 +31,37 @@ export async function GET(request: NextRequest) {
     const isAdmin = canManageLinks(session);
 
     // Build query based on user role and position
-    const query: any = {
+    const query: Prisma.ImportantLinkFindManyArgs = {
       where: {
         // Regular users only see active links
         ...(isAdmin ? {} : { isActive: true }),
         // Filter by roles and positions
-        ...(isAdmin ? {} : {
-          OR: [
-            { visibleToRoles: { has: session.user.role } },
-            { visibleToRoles: { isEmpty: true } },
-          ],
-        }),
-        ...(isAdmin || !session.user.position ? {} : {
-          OR: [
-            { visibleToPositions: { has: session.user.position } },
-            { visibleToPositions: { isEmpty: true } },
-          ],
-        }),
+        ...(isAdmin
+          ? {}
+          : {
+              OR: [
+                { visibleToRoles: { has: session.user.role } },
+                { visibleToRoles: { isEmpty: true } },
+              ],
+            }),
+        ...(isAdmin || !session.user.position
+          ? {}
+          : {
+              OR: [
+                { visibleToPositions: { has: session.user.position } },
+                { visibleToPositions: { isEmpty: true } },
+              ],
+            }),
       },
-      orderBy: [
-        { category: "asc" },
-        { order: "asc" },
-      ],
+      orderBy: [{ category: 'asc' }, { order: 'asc' }],
     };
 
     const links = await prisma.importantLink.findMany(query);
 
     return NextResponse.json(links);
   } catch (error) {
-    console.error("Error fetching links:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch links" },
-      { status: 500 }
-    );
+    console.error('Error fetching links:', error);
+    return NextResponse.json({ error: 'Failed to fetch links' }, { status: 500 });
   }
 }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -100,20 +100,14 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!title || !url) {
-      return NextResponse.json(
-        { error: "Title and URL are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Title and URL are required' }, { status: 400 });
     }
 
     // Try to validate URL format
     try {
       new URL(url);
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid URL format" },
-        { status: 400 }
-      );
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
     }
 
     // Generate category slug if category is provided
@@ -138,7 +132,7 @@ export async function POST(request: NextRequest) {
     // Notify relevant users about the new link if it's active
     if (isActive !== false) {
       // Get users who should receive this notification based on roles/positions
-      const whereClause: any = {
+      const whereClause: Prisma.UserWhereInput = {
         isActive: true,
       };
 
@@ -160,9 +154,9 @@ export async function POST(request: NextRequest) {
         await prisma.notification.createMany({
           data: users.map((user) => ({
             userId: user.id,
-            title: "New Important Link",
+            title: 'New Important Link',
             message: `A new link has been added: ${title}`,
-            type: "LINK",
+            type: 'LINK',
             resourceId: link.id,
             // Links don't expire
           })),
@@ -172,10 +166,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(link, { status: 201 });
   } catch (error) {
-    console.error("Error creating link:", error);
-    return NextResponse.json(
-      { error: "Failed to create link" },
-      { status: 500 }
-    );
+    console.error('Error creating link:', error);
+    return NextResponse.json({ error: 'Failed to create link' }, { status: 500 });
   }
 }

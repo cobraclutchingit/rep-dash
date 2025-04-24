@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { Button } from "../button";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
+
+import { Button } from '../button';
 
 interface EmptyStateProps {
   title: string;
@@ -14,27 +15,17 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({
-  title,
-  description,
-  icon,
-  action,
-  className,
-}: EmptyStateProps) {
+export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center py-12 px-4 text-center rounded-lg border border-dashed bg-card/50",
+        'bg-card/50 flex flex-col items-center justify-center rounded-lg border border-dashed px-4 py-12 text-center',
         className
       )}
     >
-      {icon && <div className="mb-4 text-muted-foreground">{icon}</div>}
-      <h3 className="text-lg font-medium text-foreground mb-1">{title}</h3>
-      {description && (
-        <p className="text-sm text-muted-foreground max-w-sm mb-4">
-          {description}
-        </p>
-      )}
+      {icon && <div className="text-muted-foreground mb-4">{icon}</div>}
+      <h3 className="text-foreground mb-1 text-lg font-medium">{title}</h3>
+      {description && <p className="text-muted-foreground mb-4 max-w-sm text-sm">{description}</p>}
       {action && (
         <Button size="sm" onClick={action.onClick}>
           {action.label}
@@ -45,7 +36,7 @@ export function EmptyState({
 }
 
 export function TableEmptyState({
-  title = "No results found",
+  title = 'No results found',
   description = "Try adjusting your search or filter to find what you're looking for.",
   ...props
 }: Partial<EmptyStateProps>) {

@@ -1,10 +1,6 @@
-// Sentry Integration for Rep Dashboard
-// This file configures error tracking using Sentry
-
 import * as Sentry from '@sentry/nextjs';
+import { Session } from 'next-auth';
 
-// This initializes Sentry for client-side monitoring
-// Place this in your _app.js or equivalent
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 const initSentry = () => {
@@ -17,39 +13,26 @@ const initSentry = () => {
     dsn: SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
-    
-    // Sampling rates to balance performance with data collection
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
-    
-    // Customizing the behavior
     integrations: [
       new Sentry.Replay({
         maskAllText: true,
         blockAllMedia: true,
       }),
     ],
-    
-    // Ignore common errors that are not actionable
     ignoreErrors: [
-      // Network errors that are usually not actionable
       'Network request failed',
       'Failed to fetch',
       'NetworkError',
       'AbortError',
-      // Browser extensions can cause errors
       'ResizeObserver loop limit exceeded',
       'Extension context invalidated',
-      // Third-party script errors
       'Script error',
-      // User actions during navigation
       'User aborted a request',
     ],
-    
-    // Minimize identifying user information by default
     beforeSend(event) {
-      // Scrub sensitive data
       if (event.request && event.request.headers) {
         delete event.request.headers.cookie;
         delete event.request.headers.authorization;
@@ -57,19 +40,17 @@ const initSentry = () => {
       return event;
     },
   });
-  
-  // Track unhandled promise rejections
+
   window.addEventListener('unhandledrejection', (event) => {
     Sentry.captureException(event.reason);
   });
-  
-  console.log('Sentry initialized for error tracking');
+
+  console.warn('Sentry initialized for error tracking');
 };
 
-// Track user information when authenticated
-export const identifyUser = (user) => {
+export const identifyUser = (user: Session['user'] | null) => {
   if (!SENTRY_DSN) return;
-  
+
   if (user && user.id) {
     Sentry.setUser({
       id: user.id,
@@ -81,28 +62,26 @@ export const identifyUser = (user) => {
   }
 };
 
-// Custom error context for better tracking
-export const setErrorContext = (context = {}) => {
+export const setErrorContext = (context: Record<string, unknown> = {}) => {
   if (!SENTRY_DSN) return;
-  
+
   Object.entries(context).forEach(([key, value]) => {
     Sentry.setContext(key, value);
   });
 };
 
-// Custom monitoring for business-critical paths
-export const monitorTransaction = (name, operation, callback) => {
+export const monitorTransaction = <T>(name: string, operation: string, callback: () => T): T => {
   if (!SENTRY_DSN) return callback();
-  
+
   const transaction = Sentry.startTransaction({
     name,
     op: operation,
   });
-  
-  Sentry.configureScope(scope => {
+
+  Sentry.configureScope((scope) => {
     scope.setSpan(transaction);
   });
-  
+
   try {
     const result = callback();
     transaction.finish();
@@ -114,25 +93,27 @@ export const monitorTransaction = (name, operation, callback) => {
   }
 };
 
-// Logging with severity levels
-export const logWithSentry = (message, level = 'info', context = {}) => {
+export const logWithSentry = (
+  message: string,
+  level: 'debug' | 'info' | 'warning' | 'error' | 'fatal' = 'info',
+  context: Record<string, unknown> = {}
+) => {
   if (!SENTRY_DSN) {
-    console.log(`[${level.toUpperCase()}] ${message}`);
+    console.warn(`[${level.toUpperCase()}] ${message}`);
     return;
   }
-  
-  // Convert level to Sentry severity
-  const severityMap = {
+
+  const severityMap: Record<string, Sentry.SeverityLevel> = {
     debug: 'debug',
     info: 'info',
     warning: 'warning',
     error: 'error',
     fatal: 'fatal',
   };
-  
+
   const severity = severityMap[level] || 'info';
-  
-  Sentry.withScope(scope => {
+
+  Sentry.withScope((scope) => {
     scope.setLevel(severity);
     Object.entries(context).forEach(([key, value]) => {
       scope.setExtra(key, value);
@@ -141,10 +122,9 @@ export const logWithSentry = (message, level = 'info', context = {}) => {
   });
 };
 
-// Annotate specific routes for performance tracking
-export const monitorRoutePerformance = (route, description) => {
+export const monitorRoutePerformance = (route: string, description: string) => {
   if (!SENTRY_DSN) return;
-  
+
   Sentry.addBreadcrumb({
     category: 'navigation',
     message: `Navigated to ${route}`,

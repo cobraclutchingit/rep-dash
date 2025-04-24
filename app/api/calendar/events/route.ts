@@ -1,66 +1,67 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { canManageEvents } from "@/lib/utils/permissions";
-import { z } from "zod";
+import { Prisma, SalesPosition, UserRole } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { z } from 'zod';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { canManageEvents } from '@/lib/utils/permissions';
 
 // Schema for event validation
 const eventSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, 'Title is required'),
   description: z.string().optional().nullable(),
-  eventType: z.enum([
-    "TRAINING", "MEETING", "APPOINTMENT", "BLITZ", 
-    "CONTEST", "HOLIDAY", "OTHER"
-  ]),
+  eventType: z.enum(['TRAINING', 'MEETING', 'APPOINTMENT', 'BLITZ', 'CONTEST', 'HOLIDAY', 'OTHER']),
   isBlitz: z.boolean().default(false),
-  startDate: z.string().refine(val => !isNaN(Date.parse(val)), {
-    message: "Invalid start date",
+  startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: 'Invalid start date',
   }),
-  endDate: z.string().refine(val => !isNaN(Date.parse(val)), {
-    message: "Invalid end date",
+  endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: 'Invalid end date',
   }),
   allDay: z.boolean().default(false),
   location: z.string().optional().nullable(),
   locationUrl: z.string().optional().nullable(),
-  recurrence: z.enum(["NONE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]).default("NONE"),
+  recurrence: z.enum(['NONE', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']).default('NONE'),
   recurrenceEndDate: z.string().optional().nullable(),
   isPublic: z.boolean().default(true),
-  visibleToRoles: z.array(z.enum(["USER", "ADMIN"])),
-  visibleToPositions: z.array(z.enum([
-    "JUNIOR_EC", "ENERGY_CONSULTANT", "ENERGY_SPECIALIST", "MANAGER"
-  ])).optional(),
+  visibleToRoles: z.array(z.enum([UserRole.USER, UserRole.ADMIN])),
+  visibleToPositions: z
+    .array(
+      z.enum([
+        SalesPosition.JUNIOR_EC,
+        SalesPosition.ENERGY_CONSULTANT,
+        SalesPosition.ENERGY_SPECIALIST,
+        SalesPosition.MANAGER,
+      ])
+    )
+    .optional(),
 });
 
 // GET /api/calendar/events - Get events
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Parse query parameters for filtering
     const searchParams = request.nextUrl.searchParams;
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
-    const eventType = searchParams.get("eventType");
-    
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const eventType = searchParams.get('eventType');
+
     // Build filter condition
-    const filter: any = {
+    const filter: Prisma.CalendarEventWhereInput = {
       OR: [
         {
-          // Events visible to the user's role
           visibleToRoles: {
             has: session.user.role,
           },
         },
         {
-          // Events visible to the user's position (if they have one)
           ...(session.user.position && {
             visibleToPositions: {
               has: session.user.position,
@@ -69,26 +70,23 @@ export async function GET(request: NextRequest) {
         },
       ],
     };
-    
+
     // Add date range filter if provided
     if (startDate && endDate) {
       filter.OR = [
         {
-          // Events that start within the range
           startDate: {
             gte: new Date(startDate),
             lte: new Date(endDate),
           },
         },
         {
-          // Events that end within the range
           endDate: {
             gte: new Date(startDate),
             lte: new Date(endDate),
           },
         },
         {
-          // Events that span the entire range
           AND: [
             {
               startDate: {
@@ -112,12 +110,19 @@ export async function GET(request: NextRequest) {
         lte: new Date(endDate),
       };
     }
-    
+
     // Add event type filter if provided
     if (eventType) {
-      filter.eventType = eventType;
+      filter.eventType = eventType as
+        | 'TRAINING'
+        | 'MEETING'
+        | 'APPOINTMENT'
+        | 'BLITZ'
+        | 'CONTEST'
+        | 'HOLIDAY'
+        | 'OTHER';
     }
-    
+
     // Get events
     const events = await prisma.calendarEvent.findMany({
       where: filter,
@@ -144,17 +149,16 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        startDate: "asc",
+        startDate: 'asc',
       },
     });
-    
+
     return NextResponse.json(events);
   } catch (error) {
-    console.error("Error fetching events:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch events" },
-      { status: 500 }
-    );
+    console.error('Error fetching events:', error);
+    return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -162,14 +166,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Check if user has permission to create events
     if (!canManageEvents(session)) {
       return NextResponse.json(
@@ -177,27 +178,27 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-    
+
     // Parse and validate request body
     const body = await request.json();
     const validationResult = eventSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Invalid event data", details: validationResult.error.format() },
+        { error: 'Invalid event data', details: validationResult.error.format() },
         { status: 400 }
       );
     }
-    
+
     const data = validationResult.data;
-    
+
     // If the event is not public and no roles/positions are specified, add defaults
     if (!data.isPublic) {
       if (data.visibleToRoles.length === 0) {
-        data.visibleToRoles = ["USER", "ADMIN"];
+        data.visibleToRoles = [UserRole.USER, UserRole.ADMIN];
       }
     }
-    
+
     // Create the event
     const event = await prisma.calendarEvent.create({
       data: {
@@ -240,13 +241,12 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-    
+
     return NextResponse.json(event);
   } catch (error) {
-    console.error("Error creating event:", error);
-    return NextResponse.json(
-      { error: "Failed to create event" },
-      { status: 500 }
-    );
+    console.error('Error creating event:', error);
+    return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

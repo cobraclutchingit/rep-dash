@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 interface RouteParams {
   params: {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: "You must be signed in to access this endpoint" },
+        { error: 'You must be signed in to access this endpoint' },
         { status: 401 }
       );
     }
@@ -29,10 +30,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!notification) {
-      return NextResponse.json(
-        { error: "Notification not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
     }
 
     // Check if the notification belongs to the user
@@ -53,10 +51,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(updatedNotification);
   } catch (error) {
-    console.error("Error marking notification as read:", error);
-    return NextResponse.json(
-      { error: "Failed to mark notification as read" },
-      { status: 500 }
-    );
+    console.error('Error marking notification as read:', error);
+    return NextResponse.json({ error: 'Failed to mark notification as read' }, { status: 500 });
   }
 }

@@ -1,25 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 // GET /api/training/certificates/[id] - Generate certificate
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { params } = context;
+    const { id: progressId } = await params;
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const progressId = params.id;
-    
+
     // Get the progress record
     const progress = await prisma.trainingProgress.findUnique({
       where: { id: progressId },
@@ -34,30 +29,24 @@ export async function GET(
         module: true,
       },
     });
-    
+
     if (!progress) {
-      return NextResponse.json(
-        { error: "Certificate not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
     }
-    
+
     // Verify ownership or admin access
-    if (progress.userId !== session.user.id && session.user.role !== "ADMIN") {
+    if (progress.userId !== session.user.id && session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: "Unauthorized to access this certificate" },
+        { error: 'Unauthorized to access this certificate' },
         { status: 403 }
       );
     }
-    
+
     // Verify the module was completed
-    if (progress.status !== "COMPLETED") {
-      return NextResponse.json(
-        { error: "Module not completed" },
-        { status: 400 }
-      );
+    if (progress.status !== 'COMPLETED') {
+      return NextResponse.json({ error: 'Module not completed' }, { status: 400 });
     }
-    
+
     // In a real application, here you would generate a PDF certificate
     // For this example, we'll just return the certificate data
     const certificateData = {
@@ -68,7 +57,7 @@ export async function GET(
       completedAt: progress.completedAt,
       issueDate: new Date(),
     };
-    
+
     // Update progress with certificate info if not already issued
     if (!progress.certificateIssued) {
       await prisma.trainingProgress.update({
@@ -79,7 +68,7 @@ export async function GET(
         },
       });
     }
-    
+
     // Return simulated HTML for the certificate
     return new NextResponse(
       `
@@ -143,11 +132,15 @@ export async function GET(
           <div class="subheader">has successfully completed</div>
           <div class="course">${certificateData.moduleName}</div>
           <div class="date">
-            Completed on ${new Date(certificateData.completedAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+            Completed on ${
+              certificateData.completedAt
+                ? new Date(certificateData.completedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                : 'N/A'
+            }
           </div>
           <div class="signature">
             <div>___________________________</div>
@@ -164,10 +157,7 @@ export async function GET(
       }
     );
   } catch (error) {
-    console.error("Error generating certificate:", error);
-    return NextResponse.json(
-      { error: "Failed to generate certificate" },
-      { status: 500 }
-    );
+    console.error('Error generating certificate:', error);
+    return NextResponse.json({ error: 'Failed to generate certificate' }, { status: 500 });
   }
 }

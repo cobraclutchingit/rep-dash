@@ -1,19 +1,19 @@
-import { UserRole, SalesPosition } from "@prisma/client";
-import { Session } from "next-auth";
+import { UserRole, SalesPosition } from '@prisma/client';
+import { Session } from 'next-auth';
 
 // Role and position checking
-export function hasRole(session: Session | null, role: UserRole) {
+export function hasRole(session: Session | null | undefined, role: UserRole) {
   if (!session?.user) return false;
   return session.user.role === role;
 }
 
-export function hasOneOfRoles(session: Session | null, roles: UserRole[]) {
+export function hasOneOfRoles(session: Session | null | undefined, roles: UserRole[]) {
   if (!session?.user) return false;
   return roles.includes(session.user.role as UserRole);
 }
 
-export function isAdmin(session: Session | null) {
-  return hasRole(session, "ADMIN" as UserRole);
+export function isAdmin(session: Session | null | undefined) {
+  return hasRole(session, 'ADMIN' as UserRole);
 }
 
 export function isActive(session: Session | null) {
@@ -32,35 +32,35 @@ export function hasOneOfPositions(session: Session | null, positions: SalesPosit
 }
 
 export function isManager(session: Session | null) {
-  return hasSalesPosition(session, "MANAGER" as SalesPosition);
+  return hasSalesPosition(session, 'MANAGER' as SalesPosition);
 }
 
 export function isEnergyConsultant(session: Session | null) {
-  return hasSalesPosition(session, "ENERGY_CONSULTANT" as SalesPosition);
+  return hasSalesPosition(session, 'ENERGY_CONSULTANT' as SalesPosition);
 }
 
 export function isEnergySpecialist(session: Session | null) {
-  return hasSalesPosition(session, "ENERGY_SPECIALIST" as SalesPosition);
+  return hasSalesPosition(session, 'ENERGY_SPECIALIST' as SalesPosition);
 }
 
 export function isJuniorEC(session: Session | null) {
-  return hasSalesPosition(session, "JUNIOR_EC" as SalesPosition);
+  return hasSalesPosition(session, 'JUNIOR_EC' as SalesPosition);
 }
 
 // Access control functions
 export function canAccessAdminFeatures(session: Session | null) {
   if (!session?.user) return false;
-  
+
   // Admin role always has access
-  if (session.user.role === "ADMIN") return true;
+  if (session.user.role === 'ADMIN') return true;
 
   // Sales managers can also access some admin features
-  if (session.user.position === "MANAGER") return true;
+  if (session.user.position === 'MANAGER') return true;
 
   return false;
 }
 
-export function canManageUsers(session: Session | null) {
+export function canManageUsers(session: Session | null | undefined) {
   return isAdmin(session);
 }
 
@@ -78,10 +78,10 @@ export function canManageTeam(session: Session | null) {
 
 export function canViewTrainingProgress(session: Session | null, userId: string) {
   if (!session?.user) return false;
-  
+
   // Admins and managers can view all progress
   if (canAccessAdminFeatures(session)) return true;
-  
+
   // Users can only view their own progress
   return session.user.id === userId;
 }
@@ -106,19 +106,23 @@ export function canManageContests(session: Session | null) {
   return canManageCommunications(session);
 }
 
+export function canManageAnnouncements(session: Session | null) {
+  return canManageCommunications(session);
+}
+
 export function canEditUserProfile(session: Session | null, userId: string) {
   if (!session?.user) return false;
-  
+
   // Admins can edit any profile
   if (isAdmin(session)) return true;
-  
+
   // Managers can edit team members' profiles
   if (isManager(session)) {
     // In a real implementation, you would check if the user is in the manager's team
     // For now, we'll simplify it
     return true;
   }
-  
+
   // Users can only edit their own profile
   return session.user.id === userId;
 }
@@ -141,9 +145,9 @@ export function canManageLeaderboards(session: Session | null) {
 }
 
 export function canScheduleEvents(session: Session | null) {
-  return canAccessAdminFeatures(session) || 
-         isEnergySpecialist(session) || 
-         isEnergyConsultant(session);
+  return (
+    canAccessAdminFeatures(session) || isEnergySpecialist(session) || isEnergyConsultant(session)
+  );
 }
 
 export function canManageEvents(session: Session | null) {
@@ -152,10 +156,10 @@ export function canManageEvents(session: Session | null) {
 
 export function canEditEvent(session: Session | null, createdById: string) {
   if (!session?.user) return false;
-  
+
   // Admin role or managers can edit any event
   if (canAccessAdminFeatures(session)) return true;
-  
+
   // Creator can edit their own events
   return session.user.id === createdById;
 }
@@ -166,16 +170,25 @@ export function canManageOnboarding(session: Session | null) {
 
 export function canViewOnboardingProgress(session: Session | null, userId: string) {
   if (!session?.user) return false;
-  
+
   // Admins and managers can view all progress
   if (canAccessAdminFeatures(session)) return true;
-  
+
   // Users can only view their own progress
   return session.user.id === userId;
 }
 
 // Common position groups for easier permission checks
-export const MANAGER_POSITIONS = ["MANAGER"] as SalesPosition[];
-export const SALES_POSITIONS = ["ENERGY_CONSULTANT", "ENERGY_SPECIALIST", "JUNIOR_EC"] as SalesPosition[];
-export const SENIOR_SALES_POSITIONS = ["ENERGY_CONSULTANT", "ENERGY_SPECIALIST"] as SalesPosition[];
-export const ALL_POSITIONS = ["MANAGER", "ENERGY_CONSULTANT", "ENERGY_SPECIALIST", "JUNIOR_EC"] as SalesPosition[];
+export const MANAGER_POSITIONS = ['MANAGER'] as SalesPosition[];
+export const SALES_POSITIONS = [
+  'ENERGY_CONSULTANT',
+  'ENERGY_SPECIALIST',
+  'JUNIOR_EC',
+] as SalesPosition[];
+export const SENIOR_SALES_POSITIONS = ['ENERGY_CONSULTANT', 'ENERGY_SPECIALIST'] as SalesPosition[];
+export const ALL_POSITIONS = [
+  'MANAGER',
+  'ENERGY_CONSULTANT',
+  'ENERGY_SPECIALIST',
+  'JUNIOR_EC',
+] as SalesPosition[];

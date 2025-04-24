@@ -1,12 +1,10 @@
-"use client";
+'use client';
 
-import { 
-  useQuery, 
-  useMutation, 
-  useQueryClient 
-} from "@tanstack/react-query";
-import { apiClient } from "../api-client";
-import { toast } from "@/components/ui/toast";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { successToast } from '@/components/ui/toast';
+
+import { apiClient } from '../api-client';
 
 // Type definitions for leaderboard data
 export interface Leaderboard {
@@ -33,7 +31,7 @@ export interface LeaderboardEntry {
   rank: number | null;
   periodStart: string;
   periodEnd: string;
-  metrics: any | null;
+  metrics: unknown | null;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -53,6 +51,7 @@ export interface LeaderboardFilter {
   search?: string;
   page?: number;
   pageSize?: number;
+  [key: string]: string | number | boolean | undefined;
 }
 
 // ===== Leaderboard Queries =====
@@ -62,9 +61,9 @@ export interface LeaderboardFilter {
  */
 export function useLeaderboards(params?: LeaderboardFilter) {
   return useQuery({
-    queryKey: ["leaderboards", params],
+    queryKey: ['leaderboards', params],
     queryFn: async () => {
-      const response = await apiClient.get<Leaderboard[]>("/leaderboard", {
+      const response = await apiClient.get<Leaderboard[]>('/leaderboard', {
         params,
       });
       return response.data;
@@ -77,7 +76,7 @@ export function useLeaderboards(params?: LeaderboardFilter) {
  */
 export function useLeaderboard(id: string, params?: LeaderboardFilter) {
   return useQuery({
-    queryKey: ["leaderboards", id, params],
+    queryKey: ['leaderboards', id, params],
     queryFn: async () => {
       const response = await apiClient.get<Leaderboard>(`/leaderboard/${id}`, {
         params,
@@ -93,11 +92,14 @@ export function useLeaderboard(id: string, params?: LeaderboardFilter) {
  */
 export function useLeaderboardEntries(leaderboardId: string, params?: LeaderboardFilter) {
   return useQuery({
-    queryKey: ["leaderboardEntries", leaderboardId, params],
+    queryKey: ['leaderboardEntries', leaderboardId, params],
     queryFn: async () => {
-      const response = await apiClient.get<LeaderboardEntry[]>(`/leaderboard/${leaderboardId}/entries`, {
-        params,
-      });
+      const response = await apiClient.get<LeaderboardEntry[]>(
+        `/leaderboard/${leaderboardId}/entries`,
+        {
+          params,
+        }
+      );
       return response.data;
     },
     enabled: !!leaderboardId,
@@ -109,12 +111,12 @@ export function useLeaderboardEntries(leaderboardId: string, params?: Leaderboar
  */
 export function useUserLeaderboardStats(leaderboardId?: string) {
   return useQuery({
-    queryKey: ["userLeaderboardStats", leaderboardId],
+    queryKey: ['userLeaderboardStats', leaderboardId],
     queryFn: async () => {
-      const endpoint = leaderboardId 
-        ? `/leaderboard/user/stats/${leaderboardId}` 
-        : "/leaderboard/user/stats";
-        
+      const endpoint = leaderboardId
+        ? `/leaderboard/user/stats/${leaderboardId}`
+        : '/leaderboard/user/stats';
+
       const response = await apiClient.get<{
         rank: number | null;
         score: number | null;
@@ -122,7 +124,7 @@ export function useUserLeaderboardStats(leaderboardId?: string) {
         rankChange: number | null;
         topPosition: boolean;
       }>(endpoint);
-      
+
       return response.data;
     },
     enabled: !!leaderboardId,
@@ -136,19 +138,18 @@ export function useUserLeaderboardStats(leaderboardId?: string) {
  */
 export function useCreateLeaderboard() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (data: Omit<Leaderboard, "id" | "createdAt" | "updatedAt">) => {
-      const response = await apiClient.post<Leaderboard>("/leaderboard", data);
+    mutationFn: async (data: Omit<Leaderboard, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const response = await apiClient.post<Leaderboard>('/leaderboard', data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leaderboards"] });
-      
-      toast({
-        title: "Success",
-        description: "Leaderboard created successfully",
-        variant: "success",
+      queryClient.invalidateQueries({ queryKey: ['leaderboards'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Leaderboard created successfully',
       });
     },
   });
@@ -159,26 +160,27 @@ export function useCreateLeaderboard() {
  */
 export function useUpdateLeaderboard() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({
       id,
       data,
     }: {
       id: string;
-      data: Partial<Omit<Leaderboard, "id" | "createdAt" | "updatedAt">>;
+      data: Partial<Omit<Leaderboard, 'id' | 'createdAt' | 'updatedAt'>>;
     }) => {
       const response = await apiClient.patch<Leaderboard>(`/leaderboard/${id}`, data);
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["leaderboards", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["leaderboards"] });
-      
-      toast({
-        title: "Success",
-        description: "Leaderboard updated successfully",
-        variant: "success",
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: ['leaderboards', data.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['leaderboards'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Leaderboard updated successfully',
       });
     },
   });
@@ -189,14 +191,14 @@ export function useUpdateLeaderboard() {
  */
 export function useCreateLeaderboardEntry() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({
       leaderboardId,
       data,
     }: {
       leaderboardId: string;
-      data: Omit<LeaderboardEntry, "id" | "createdAt" | "updatedAt" | "leaderboardId">;
+      data: Omit<LeaderboardEntry, 'id' | 'createdAt' | 'updatedAt' | 'leaderboardId'>;
     }) => {
       const response = await apiClient.post<LeaderboardEntry>(
         `/leaderboard/${leaderboardId}/entries`,
@@ -205,14 +207,15 @@ export function useCreateLeaderboardEntry() {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["leaderboardEntries", data.leaderboardId] });
-      queryClient.invalidateQueries({ queryKey: ["leaderboards", data.leaderboardId] });
-      queryClient.invalidateQueries({ queryKey: ["userLeaderboardStats"] });
-      
-      toast({
-        title: "Success",
-        description: "Entry added successfully",
-        variant: "success",
+      if (data?.leaderboardId) {
+        queryClient.invalidateQueries({ queryKey: ['leaderboardEntries', data.leaderboardId] });
+        queryClient.invalidateQueries({ queryKey: ['leaderboards', data.leaderboardId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['userLeaderboardStats'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Entry added successfully',
       });
     },
   });
@@ -223,7 +226,7 @@ export function useCreateLeaderboardEntry() {
  */
 export function useBulkCreateLeaderboardEntries() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({
       leaderboardId,
@@ -231,7 +234,12 @@ export function useBulkCreateLeaderboardEntries() {
     }: {
       leaderboardId: string;
       data: {
-        entries: Array<Omit<LeaderboardEntry, "id" | "createdAt" | "updatedAt" | "leaderboardId" | "periodStart" | "periodEnd">>;
+        entries: Array<
+          Omit<
+            LeaderboardEntry,
+            'id' | 'createdAt' | 'updatedAt' | 'leaderboardId' | 'periodStart' | 'periodEnd'
+          >
+        >;
         periodStart: string;
         periodEnd: string;
       };
@@ -243,14 +251,13 @@ export function useBulkCreateLeaderboardEntries() {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["leaderboardEntries", variables.leaderboardId] });
-      queryClient.invalidateQueries({ queryKey: ["leaderboards", variables.leaderboardId] });
-      queryClient.invalidateQueries({ queryKey: ["userLeaderboardStats"] });
-      
-      toast({
-        title: "Success",
+      queryClient.invalidateQueries({ queryKey: ['leaderboardEntries', variables.leaderboardId] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboards', variables.leaderboardId] });
+      queryClient.invalidateQueries({ queryKey: ['userLeaderboardStats'] });
+
+      successToast({
+        title: 'Success',
         description: `${variables.data.entries.length} entries added successfully`,
-        variant: "success",
       });
     },
   });
@@ -261,21 +268,24 @@ export function useBulkCreateLeaderboardEntries() {
  */
 export function useDeleteLeaderboardEntry() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (entryId: string) => {
-      const response = await apiClient.delete<{ leaderboardId: string }>(`/leaderboard/entries/${entryId}`);
+      const response = await apiClient.delete<{ leaderboardId: string }>(
+        `/leaderboard/entries/${entryId}`
+      );
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["leaderboardEntries", data.leaderboardId] });
-      queryClient.invalidateQueries({ queryKey: ["leaderboards", data.leaderboardId] });
-      queryClient.invalidateQueries({ queryKey: ["userLeaderboardStats"] });
-      
-      toast({
-        title: "Success",
-        description: "Entry deleted successfully",
-        variant: "success",
+      if (data?.leaderboardId) {
+        queryClient.invalidateQueries({ queryKey: ['leaderboardEntries', data.leaderboardId] });
+        queryClient.invalidateQueries({ queryKey: ['leaderboards', data.leaderboardId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['userLeaderboardStats'] });
+
+      successToast({
+        title: 'Success',
+        description: 'Entry deleted successfully',
       });
     },
   });

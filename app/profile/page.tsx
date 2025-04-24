@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { SalesPosition } from "@prisma/client";
+import { SalesPosition } from '@prisma/client';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 
 type ProfileData = {
   name: string;
@@ -20,25 +20,25 @@ export default function ProfilePage() {
   const { data: session, update, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState<ProfileData>({
-    name: "",
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    bio: "",
-    territory: "",
-    position: "JUNIOR_EC" as SalesPosition,
-    profileImageUrl: "",
+    name: '',
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    bio: '',
+    territory: '',
+    position: 'JUNIOR_EC' as SalesPosition,
+    profileImageUrl: '',
   });
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === 'loading') return;
 
     if (!session) {
-      router.push("/auth/login");
+      router.push('/login');
       return;
     }
 
@@ -48,23 +48,23 @@ export default function ProfilePage() {
       try {
         const response = await fetch(`/api/users/${session.user.id}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch user data");
+          throw new Error('Failed to fetch user data');
         }
 
         const userData = await response.json();
         setFormData({
-          name: userData.name || "",
-          fullName: userData.fullName || "",
-          email: userData.email || "",
-          phoneNumber: userData.phoneNumber || "",
-          bio: userData.bio || "",
-          territory: userData.territory || "",
-          position: userData.position || "JUNIOR_EC",
-          profileImageUrl: userData.profileImageUrl || "",
+          name: userData.name || '',
+          fullName: userData.fullName || '',
+          email: userData.email || '',
+          phoneNumber: userData.phoneNumber || '',
+          bio: userData.bio || '',
+          territory: userData.territory || '',
+          position: userData.position || 'JUNIOR_EC',
+          profileImageUrl: userData.profileImageUrl || '',
         });
       } catch (error) {
-        console.error("Error fetching user data:", error);
-        setError("Failed to load profile data. Please try again.");
+        console.error('Error fetching user data:', error);
+        setError('Failed to load profile data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -73,7 +73,9 @@ export default function ProfilePage() {
     fetchUserData();
   }, [session, router, status]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -81,25 +83,23 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    setSuccessMessage("");
+    setError('');
+    setSuccessMessage('');
 
     try {
       const response = await fetch(`/api/users/${session?.user.id}`, {
-        method: "PATCH",
+        method: 'PATCH',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Failed to update profile");
+        throw new Error(data.message || 'Failed to update profile');
       }
 
-      const updatedUser = await response.json();
-      
       // Update the session with new values
       await update({
         ...session,
@@ -110,13 +110,13 @@ export default function ProfilePage() {
         },
       });
 
-      setSuccessMessage("Profile updated successfully");
+      setSuccessMessage('Profile updated successfully');
       setIsEditing(false);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError("Failed to update profile. Please try again.");
+        setError('Failed to update profile. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -125,43 +125,43 @@ export default function ProfilePage() {
 
   if (loading && !formData.email) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg shadow">
-          <h1 className="text-2xl font-bold mb-6">Loading profile...</h1>
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-background mx-auto max-w-2xl rounded-lg p-6 shadow">
+          <h1 className="mb-6 text-2xl font-bold">Loading profile...</h1>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg shadow">
-        <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-background mx-auto max-w-2xl rounded-lg p-6 shadow">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Your Profile</h1>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white"
           >
-            {isEditing ? "Cancel" : "Edit Profile"}
+            {isEditing ? 'Cancel' : 'Edit Profile'}
           </button>
         </div>
 
         {error && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm mb-4">
+          <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div className="bg-green-100 text-green-800 p-3 rounded-md text-sm mb-4">
+          <div className="mb-4 rounded-md bg-green-100 p-3 text-sm text-green-800">
             {successMessage}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium">
                 Username
               </label>
               <input
@@ -171,12 +171,12 @@ export default function ProfilePage() {
                 value={formData.name}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
             </div>
 
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium mb-1">
+              <label htmlFor="fullName" className="mb-1 block text-sm font-medium">
                 Full Name
               </label>
               <input
@@ -186,12 +186,12 @@ export default function ProfilePage() {
                 value={formData.fullName}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium">
                 Email
               </label>
               <input
@@ -200,13 +200,13 @@ export default function ProfilePage() {
                 type="email"
                 value={formData.email}
                 disabled
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
-              <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
+              <p className="text-muted-foreground mt-1 text-xs">Email cannot be changed</p>
             </div>
 
             <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-medium mb-1">
+              <label htmlFor="phoneNumber" className="mb-1 block text-sm font-medium">
                 Phone Number
               </label>
               <input
@@ -216,27 +216,29 @@ export default function ProfilePage() {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
             </div>
 
             <div>
-              <label htmlFor="position" className="block text-sm font-medium mb-1">
+              <label htmlFor="position" className="mb-1 block text-sm font-medium">
                 Position
               </label>
               <input
                 id="position"
                 name="position"
                 type="text"
-                value={formData.position?.replace(/_/g, " ")}
+                value={formData.position?.replace(/_/g, ' ')}
                 disabled
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
-              <p className="text-xs text-muted-foreground mt-1">Position can only be changed by administrators</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Position can only be changed by administrators
+              </p>
             </div>
 
             <div>
-              <label htmlFor="territory" className="block text-sm font-medium mb-1">
+              <label htmlFor="territory" className="mb-1 block text-sm font-medium">
                 Territory
               </label>
               <input
@@ -246,28 +248,28 @@ export default function ProfilePage() {
                 value={formData.territory}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label htmlFor="profileImageUrl" className="block text-sm font-medium mb-1">
+              <label htmlFor="profileImageUrl" className="mb-1 block text-sm font-medium">
                 Profile Image URL
               </label>
               <input
                 id="profileImageUrl"
                 name="profileImageUrl"
                 type="text"
-                value={formData.profileImageUrl || ""}
+                value={formData.profileImageUrl || ''}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
                 placeholder="https://example.com/profile-image.jpg"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label htmlFor="bio" className="block text-sm font-medium mb-1">
+              <label htmlFor="bio" className="mb-1 block text-sm font-medium">
                 Bio
               </label>
               <textarea
@@ -277,7 +279,7 @@ export default function ProfilePage() {
                 value={formData.bio}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full rounded-md border-0 py-2 px-3 text-foreground bg-background ring-1 ring-inset ring-input focus:ring-2 focus:ring-primary focus:z-10 sm:text-sm sm:leading-6 disabled:opacity-70"
+                className="text-foreground bg-background ring-input focus:ring-primary w-full rounded-md border-0 px-3 py-2 ring-1 ring-inset focus:z-10 focus:ring-2 disabled:opacity-70 sm:text-sm sm:leading-6"
               />
             </div>
           </div>
@@ -287,20 +289,20 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Saving..." : "Save Changes"}
+                {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           )}
         </form>
-        
-        <div className="mt-8 pt-6 border-t">
-          <h2 className="text-lg font-bold mb-4">Security</h2>
+
+        <div className="mt-8 border-t pt-6">
+          <h2 className="mb-4 text-lg font-bold">Security</h2>
           <div className="flex flex-wrap gap-4">
             <button
-              onClick={() => router.push("/auth/change-password")}
-              className="px-4 py-2 text-sm font-medium text-primary bg-background border border-input rounded-md hover:bg-accent"
+              onClick={() => router.push('/change-password')}
+              className="text-primary bg-background border-input hover:bg-accent rounded-md border px-4 py-2 text-sm font-medium"
             >
               Change Password
             </button>

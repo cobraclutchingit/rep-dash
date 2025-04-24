@@ -9,18 +9,14 @@ export default defineConfig({
     viewportHeight: 720,
     video: false,
     screenshotOnRunFailure: true,
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
+    setupNodeEvents(on: Cypress.PluginEvents, _config: Cypress.PluginConfigOptions): void {
       on('task', {
-        // Add tasks for database operations, etc.
-        log(message) {
-          console.log(message);
+        log(message: string): null {
+          console.error(message);
           return null;
         },
-        // Example database reset task
-        resetDatabase() {
-          // In a real app, you would reset the test database here
-          console.log('Resetting test database...');
+        resetDatabase(): null {
+          console.error('Resetting test database...');
           return null;
         },
       });

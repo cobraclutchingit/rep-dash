@@ -1,26 +1,28 @@
-import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
-import CalendarProvider from "./providers/calendar-provider";
-import CalendarView from "./components/calendar-view";
-import CalendarToolbar from "./components/calendar-toolbar";
-import { EventType } from "@prisma/client";
-import "./styles/calendar.css";
+import { EventType } from '@prisma/client';
+import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+
+import CalendarToolbar from './components/calendar-toolbar';
+import CalendarView from './components/calendar-view';
+import CalendarProvider from './providers/calendar-provider';
+import './styles/calendar.css';
 
 export const metadata: Metadata = {
-  title: "Calendar | Sales Rep Dashboard",
-  description: "Manage your meetings and events",
+  title: 'Calendar | Sales Rep Dashboard',
+  description: 'Manage your meetings and events',
 };
 
 export default async function CalendarPage() {
   const session = await getServerSession(authOptions);
-  
+
   if (!session) {
-    redirect("/auth/login");
+    redirect('/login');
   }
-  
+
   // Fetch all events visible to the user
   const events = await prisma.calendarEvent.findMany({
     where: {
@@ -64,23 +66,23 @@ export default async function CalendarPage() {
       },
     },
     orderBy: {
-      startDate: "asc",
+      startDate: 'asc',
     },
   });
-  
+
   // Get event types for filtering
   const eventTypes = Object.values(EventType);
-  
+
   return (
     <CalendarProvider initialEvents={events}>
       <div className="container mx-auto p-6">
         <div className="flex flex-col space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+          <div className="mb-4 flex flex-col justify-between md:flex-row md:items-center">
             <h1 className="text-3xl font-bold">Calendar</h1>
             <CalendarToolbar eventTypes={eventTypes} userId={session.user.id} />
           </div>
-          
-          <div className="bg-card text-card-foreground rounded-lg shadow p-4">
+
+          <div className="bg-card text-card-foreground rounded-lg p-4 shadow">
             <CalendarView userId={session.user.id} />
           </div>
         </div>

@@ -1,51 +1,58 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useCalendar } from "../providers/calendar-provider";
-import { EventType, EventRecurrence, UserRole, SalesPosition } from "@prisma/client";
+import { EventType, EventRecurrence, UserRole, SalesPosition } from '@prisma/client';
+import React, { useState, useEffect } from 'react';
+
+import { useCalendar } from '../providers/calendar-provider';
 
 interface EventFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
+  _userId?: string; // For compatibility
   selectedDate: Date;
 }
 
-export default function EventFormModal({ isOpen, onClose, userId, selectedDate }: EventFormModalProps) {
+export default function EventFormModal({
+  isOpen,
+  onClose,
+  _userId,
+  selectedDate,
+}: EventFormModalProps) {
   const { selectedEvent, addEvent, updateEvent } = useCalendar();
-  
+
   // Form state
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    eventType: "MEETING" as EventType,
+    title: '',
+    description: '',
+    eventType: 'MEETING' as EventType,
     isBlitz: false,
     startDate: new Date(),
-    startTime: "09:00",
+    startTime: '09:00',
     endDate: new Date(),
-    endTime: "10:00",
+    endTime: '10:00',
     allDay: false,
-    location: "",
-    locationUrl: "",
-    recurrence: "NONE" as EventRecurrence,
+    location: '',
+    locationUrl: '',
+    recurrence: 'NONE' as EventRecurrence,
     recurrenceEndDate: null as Date | null,
     isPublic: true,
     visibleToRoles: [UserRole.USER, UserRole.ADMIN],
     visibleToPositions: [] as SalesPosition[],
   });
-  
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  
+  const [error, setError] = useState('');
+
   // Set initial form values based on selected event (for editing)
   useEffect(() => {
     if (selectedEvent) {
       const startDate = new Date(selectedEvent.startDate);
       const endDate = new Date(selectedEvent.endDate);
-      
+
       setFormData({
         title: selectedEvent.title,
-        description: selectedEvent.description || "",
+        description: selectedEvent.description || '',
         eventType: selectedEvent.eventType,
         isBlitz: selectedEvent.isBlitz,
         startDate: startDate,
@@ -53,11 +60,11 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
         endDate: endDate,
         endTime: formatTimeForInput(endDate),
         allDay: selectedEvent.allDay,
-        location: selectedEvent.location || "",
-        locationUrl: selectedEvent.locationUrl || "",
+        location: selectedEvent.location || '',
+        locationUrl: selectedEvent.locationUrl || '',
         recurrence: selectedEvent.recurrence as EventRecurrence,
-        recurrenceEndDate: selectedEvent.recurrenceEndDate 
-          ? new Date(selectedEvent.recurrenceEndDate) 
+        recurrenceEndDate: selectedEvent.recurrenceEndDate
+          ? new Date(selectedEvent.recurrenceEndDate)
           : null,
         isPublic: selectedEvent.isPublic,
         visibleToRoles: selectedEvent.visibleToRoles as UserRole[],
@@ -67,20 +74,20 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
       // For new events, set start/end date to the selected date from calendar
       const endDate = new Date(selectedDate);
       endDate.setHours(selectedDate.getHours() + 1);
-      
+
       setFormData({
-        title: "",
-        description: "",
-        eventType: "MEETING" as EventType,
+        title: '',
+        description: '',
+        eventType: 'MEETING' as EventType,
         isBlitz: false,
         startDate: selectedDate,
         startTime: formatTimeForInput(selectedDate),
         endDate: endDate,
         endTime: formatTimeForInput(endDate),
         allDay: false,
-        location: "",
-        locationUrl: "",
-        recurrence: "NONE" as EventRecurrence,
+        location: '',
+        locationUrl: '',
+        recurrence: 'NONE' as EventRecurrence,
         recurrenceEndDate: null,
         isPublic: true,
         visibleToRoles: [UserRole.USER, UserRole.ADMIN],
@@ -88,70 +95,72 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
       });
     }
   }, [selectedEvent, selectedDate]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
-    
-    if (type === "checkbox") {
+
+    if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
-  
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: new Date(value) }));
+    setFormData((prev) => ({ ...prev, [name]: new Date(value) }));
   };
-  
+
   const toggleRole = (role: UserRole) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const roles = [...prev.visibleToRoles];
       const index = roles.indexOf(role);
-      
+
       if (index === -1) {
         roles.push(role);
       } else {
         roles.splice(index, 1);
       }
-      
+
       return { ...prev, visibleToRoles: roles };
     });
   };
-  
+
   const togglePosition = (position: SalesPosition) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const positions = [...prev.visibleToPositions];
       const index = positions.indexOf(position);
-      
+
       if (index === -1) {
         positions.push(position);
       } else {
         positions.splice(index, 1);
       }
-      
+
       return { ...prev, visibleToPositions: positions };
     });
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    
+    setError('');
+
     try {
       // Combine date and time
       const startDateTime = combineDateAndTime(formData.startDate, formData.startTime);
       const endDateTime = combineDateAndTime(formData.endDate, formData.endTime);
-      
+
       // Validate dates
       if (endDateTime < startDateTime) {
-        setError("End date cannot be before start date");
+        setError('End date cannot be before start date');
         setLoading(false);
         return;
       }
-      
+
       // Format data for API
       const eventData = {
         id: selectedEvent?.id,
@@ -165,86 +174,86 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
         location: formData.location,
         locationUrl: formData.locationUrl,
         recurrence: formData.recurrence,
-        recurrenceEndDate: formData.recurrenceEndDate ? formData.recurrenceEndDate.toISOString() : null,
+        recurrenceEndDate: formData.recurrenceEndDate
+          ? formData.recurrenceEndDate.toISOString()
+          : null,
         isPublic: formData.isPublic,
         visibleToRoles: formData.visibleToRoles,
         visibleToPositions: formData.visibleToPositions,
       };
-      
+
       // Submit to API
-      const url = selectedEvent 
-        ? `/api/calendar/events/${selectedEvent.id}` 
-        : "/api/calendar/events";
-      
+      const url = selectedEvent
+        ? `/api/calendar/events/${selectedEvent.id}`
+        : '/api/calendar/events';
+
       const response = await fetch(url, {
-        method: selectedEvent ? "PUT" : "POST",
+        method: selectedEvent ? 'PUT' : 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(eventData),
       });
-      
+
       if (!response.ok) {
-        throw new Error("Failed to save event");
+        throw new Error('Failed to save event');
       }
-      
+
       const savedEvent = await response.json();
-      
+
       // Update local state
       if (selectedEvent) {
         updateEvent({
           ...savedEvent,
           startDate: new Date(savedEvent.startDate),
           endDate: new Date(savedEvent.endDate),
-          recurrenceEndDate: savedEvent.recurrenceEndDate ? new Date(savedEvent.recurrenceEndDate) : null,
+          recurrenceEndDate: savedEvent.recurrenceEndDate
+            ? new Date(savedEvent.recurrenceEndDate)
+            : null,
         });
       } else {
         addEvent({
           ...savedEvent,
           startDate: new Date(savedEvent.startDate),
           endDate: new Date(savedEvent.endDate),
-          recurrenceEndDate: savedEvent.recurrenceEndDate ? new Date(savedEvent.recurrenceEndDate) : null,
+          recurrenceEndDate: savedEvent.recurrenceEndDate
+            ? new Date(savedEvent.recurrenceEndDate)
+            : null,
         });
       }
-      
+
       onClose();
     } catch (error) {
-      console.error("Error saving event:", error);
-      setError("Failed to save event. Please try again.");
+      console.error('Error saving event:', error);
+      setError('Failed to save event. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-  
+
   if (!isOpen) return null;
-  
+
   return (
-    <div className="fixed inset-0 bg-background/50 z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-card rounded-lg shadow-lg">
-        <div className="flex justify-between items-center p-6 pb-2">
-          <h2 className="text-xl font-bold">
-            {selectedEvent ? "Edit Event" : "New Event"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-muted"
-            aria-label="Close"
-          >
+    <div className="bg-background/50 fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="bg-card w-full max-w-2xl rounded-lg shadow-lg">
+        <div className="flex items-center justify-between p-6 pb-2">
+          <h2 className="text-xl font-bold">{selectedEvent ? 'Edit Event' : 'New Event'}</h2>
+          <button onClick={onClose} className="hover:bg-muted rounded-full p-2" aria-label="Close">
             <XIcon />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 pt-2">
           {error && (
-            <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 text-sm">
+            <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
               {error}
             </div>
           )}
-          
+
           <div className="space-y-4">
             {/* Title */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium mb-1">
+              <label htmlFor="title" className="mb-1 block text-sm font-medium">
                 Title *
               </label>
               <input
@@ -254,14 +263,14 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full p-2 rounded-md border border-input bg-background"
+                className="border-input bg-background w-full rounded-md border p-2"
               />
             </div>
-            
+
             {/* Event Type & Blitz */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="eventType" className="block text-sm font-medium mb-1">
+                <label htmlFor="eventType" className="mb-1 block text-sm font-medium">
                   Event Type *
                 </label>
                 <select
@@ -269,7 +278,7 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                   name="eventType"
                   value={formData.eventType}
                   onChange={handleChange}
-                  className="w-full p-2 rounded-md border border-input bg-background"
+                  className="border-input bg-background w-full rounded-md border p-2"
                 >
                   {Object.values(EventType).map((type) => (
                     <option key={type} value={type}>
@@ -278,9 +287,9 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                   ))}
                 </select>
               </div>
-              
+
               <div className="flex items-end">
-                <label className="flex items-center cursor-pointer">
+                <label className="flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     name="isBlitz"
@@ -292,14 +301,14 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                 </label>
               </div>
             </div>
-            
+
             {/* Date and Time */}
             <div>
-              <div className="flex items-center mb-2">
+              <div className="mb-2 flex items-center">
                 <label htmlFor="startDate" className="block text-sm font-medium">
                   Date & Time *
                 </label>
-                <label className="ml-auto flex items-center cursor-pointer">
+                <label className="ml-auto flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     name="allDay"
@@ -310,12 +319,15 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                   <span className="text-sm">All Day</span>
                 </label>
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="startDate" className="block text-xs text-muted-foreground mb-1">
+                      <label
+                        htmlFor="startDate"
+                        className="text-muted-foreground mb-1 block text-xs"
+                      >
                         Start Date
                       </label>
                       <input
@@ -324,14 +336,17 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                         type="date"
                         value={formatDateForInput(formData.startDate)}
                         onChange={handleDateChange}
-                        className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                        className="border-input bg-background w-full rounded-md border p-2 text-sm"
                         required
                       />
                     </div>
-                    
+
                     {!formData.allDay && (
                       <div>
-                        <label htmlFor="startTime" className="block text-xs text-muted-foreground mb-1">
+                        <label
+                          htmlFor="startTime"
+                          className="text-muted-foreground mb-1 block text-xs"
+                        >
                           Start Time
                         </label>
                         <input
@@ -340,18 +355,18 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                           type="time"
                           value={formData.startTime}
                           onChange={handleChange}
-                          className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                          className="border-input bg-background w-full rounded-md border p-2 text-sm"
                           required
                         />
                       </div>
                     )}
                   </div>
                 </div>
-                
+
                 <div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="endDate" className="block text-xs text-muted-foreground mb-1">
+                      <label htmlFor="endDate" className="text-muted-foreground mb-1 block text-xs">
                         End Date
                       </label>
                       <input
@@ -360,14 +375,17 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                         type="date"
                         value={formatDateForInput(formData.endDate)}
                         onChange={handleDateChange}
-                        className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                        className="border-input bg-background w-full rounded-md border p-2 text-sm"
                         required
                       />
                     </div>
-                    
+
                     {!formData.allDay && (
                       <div>
-                        <label htmlFor="endTime" className="block text-xs text-muted-foreground mb-1">
+                        <label
+                          htmlFor="endTime"
+                          className="text-muted-foreground mb-1 block text-xs"
+                        >
                           End Time
                         </label>
                         <input
@@ -376,7 +394,7 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                           type="time"
                           value={formData.endTime}
                           onChange={handleChange}
-                          className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                          className="border-input bg-background w-full rounded-md border p-2 text-sm"
                           required
                         />
                       </div>
@@ -385,11 +403,11 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                 </div>
               </div>
             </div>
-            
+
             {/* Location */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="location" className="block text-sm font-medium mb-1">
+                <label htmlFor="location" className="mb-1 block text-sm font-medium">
                   Location
                 </label>
                 <input
@@ -399,12 +417,12 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                   value={formData.location}
                   onChange={handleChange}
                   placeholder="Location or meeting room"
-                  className="w-full p-2 rounded-md border border-input bg-background"
+                  className="border-input bg-background w-full rounded-md border p-2"
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="locationUrl" className="block text-sm font-medium mb-1">
+                <label htmlFor="locationUrl" className="mb-1 block text-sm font-medium">
                   Location URL
                 </label>
                 <input
@@ -414,14 +432,14 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                   value={formData.locationUrl}
                   onChange={handleChange}
                   placeholder="https://meeting-link.com"
-                  className="w-full p-2 rounded-md border border-input bg-background"
+                  className="border-input bg-background w-full rounded-md border p-2"
                 />
               </div>
             </div>
-            
+
             {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium mb-1">
+              <label htmlFor="description" className="mb-1 block text-sm font-medium">
                 Description
               </label>
               <textarea
@@ -430,10 +448,10 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full p-2 rounded-md border border-input bg-background"
+                className="border-input bg-background w-full rounded-md border p-2"
               />
             </div>
-            
+
             {/* Advanced Options */}
             <div className="border-t pt-4">
               <details className="group">
@@ -443,11 +461,11 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                     <ChevronDownIcon />
                   </span>
                 </summary>
-                
+
                 <div className="mt-4 space-y-4">
                   {/* Recurrence */}
                   <div>
-                    <label htmlFor="recurrence" className="block text-sm font-medium mb-1">
+                    <label htmlFor="recurrence" className="mb-1 block text-sm font-medium">
                       Recurrence
                     </label>
                     <select
@@ -455,7 +473,7 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                       name="recurrence"
                       value={formData.recurrence}
                       onChange={handleChange}
-                      className="w-full p-2 rounded-md border border-input bg-background"
+                      className="border-input bg-background w-full rounded-md border p-2"
                     >
                       {Object.values(EventRecurrence).map((recurrence) => (
                         <option key={recurrence} value={recurrence}>
@@ -464,30 +482,34 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                       ))}
                     </select>
                   </div>
-                  
+
                   {/* Recurrence End Date */}
-                  {formData.recurrence !== "NONE" && (
+                  {formData.recurrence !== 'NONE' && (
                     <div>
-                      <label htmlFor="recurrenceEndDate" className="block text-sm font-medium mb-1">
+                      <label htmlFor="recurrenceEndDate" className="mb-1 block text-sm font-medium">
                         Recurrence End Date
                       </label>
                       <input
                         id="recurrenceEndDate"
                         name="recurrenceEndDate"
                         type="date"
-                        value={formData.recurrenceEndDate ? formatDateForInput(formData.recurrenceEndDate) : ""}
+                        value={
+                          formData.recurrenceEndDate
+                            ? formatDateForInput(formData.recurrenceEndDate)
+                            : ''
+                        }
                         onChange={handleDateChange}
-                        className="w-full p-2 rounded-md border border-input bg-background"
+                        className="border-input bg-background w-full rounded-md border p-2"
                       />
                     </div>
                   )}
-                  
+
                   {/* Visibility Options */}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Visibility</label>
-                    
+                    <label className="mb-1 block text-sm font-medium">Visibility</label>
+
                     <div className="mb-2">
-                      <label className="flex items-center cursor-pointer">
+                      <label className="flex cursor-pointer items-center">
                         <input
                           type="checkbox"
                           name="isPublic"
@@ -498,11 +520,11 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                         <span className="text-sm">Public Event (visible to all users)</span>
                       </label>
                     </div>
-                    
+
                     {!formData.isPublic && (
                       <>
                         <div className="mb-2">
-                          <div className="text-xs font-medium mb-1 text-muted-foreground">
+                          <div className="text-muted-foreground mb-1 text-xs font-medium">
                             Visible to Roles
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -519,9 +541,9 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                             ))}
                           </div>
                         </div>
-                        
+
                         <div>
-                          <div className="text-xs font-medium mb-1 text-muted-foreground">
+                          <div className="text-muted-foreground mb-1 text-xs font-medium">
                             Visible to Positions
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -544,23 +566,23 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
                 </div>
               </details>
             </div>
-            
+
             {/* Form Actions */}
-            <div className="flex justify-end pt-4 space-x-2">
+            <div className="flex justify-end space-x-2 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md px-4 py-2"
                 disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2"
                 disabled={loading}
               >
-                {loading ? "Saving..." : selectedEvent ? "Update Event" : "Create Event"}
+                {loading ? 'Saving...' : selectedEvent ? 'Update Event' : 'Create Event'}
               </button>
             </div>
           </div>
@@ -572,7 +594,7 @@ export default function EventFormModal({ isOpen, onClose, userId, selectedDate }
 
 // Helper function to format date for input
 function formatDateForInput(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return date.toISOString().split('T')[0];
 }
 
 // Helper function to format time for input
@@ -583,34 +605,46 @@ function formatTimeForInput(date: Date): string {
 // Helper function to combine date and time
 function combineDateAndTime(date: Date, time: string): Date {
   const result = new Date(date);
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
   result.setHours(hours, minutes);
   return result;
 }
 
 // Helper function to format event type
 function formatEventType(type: string): string {
-  return type.replace(/_/g, " ").toLowerCase()
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return type
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 // Helper function to format recurrence
 function formatRecurrence(recurrence: string): string {
-  if (recurrence === "NONE") return "No Recurrence";
+  if (recurrence === 'NONE') return 'No Recurrence';
   return recurrence.charAt(0) + recurrence.slice(1).toLowerCase();
 }
 
 // Helper function to format position
 function formatPosition(position: string): string {
-  return position.replace(/_/g, " ");
+  return position.replace(/_/g, ' ');
 }
 
 // Icon components
 function XIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="18" y1="6" x2="6" y2="18"></line>
       <line x1="6" y1="6" x2="18" y2="18"></line>
     </svg>
@@ -619,7 +653,17 @@ function XIcon() {
 
 function ChevronDownIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="6 9 12 15 18 9"></polyline>
     </svg>
   );
